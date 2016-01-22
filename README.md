@@ -52,6 +52,15 @@ c.LDAPAuthenticator.allowed_groups = [
 ]
 ```
 
+#### `LDAPAuthenticator.valid_username_regex` ####
+
+All usernames will be checked against this before being sent
+to LDAP. This acts as both an easy way to filter out invalid
+usernames as well as protection against LDAP injection attacks.
+
+By default it looks for the regex `^[a-z][.a-z0-9_-]*$` which
+is what most shell username validators do.
+
 #### `LDAPAuthenticator.use_ssl` ####
 
 Boolean to specify whether to use SSL encryption when contacting
