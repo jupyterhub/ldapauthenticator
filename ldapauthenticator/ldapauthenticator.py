@@ -1,4 +1,5 @@
 import ldap3
+import re
 from jupyterhub.auth import Authenticator
 
 from tornado import gen
@@ -51,10 +52,31 @@ class LDAPAuthenticator(Authenticator):
         )
     ])
 
+    valid_username_regex = Unicode(
+        r'^[a-z][.a-z0-9_-]*$',
+        config=True,
+        help="""Regex to use to validate usernames before sending to LDAP
+
+        Also acts as a security measure to prevent LDAP injection. If you
+        are customizing this, be careful to ensure that attempts to do LDAP
+        injection are rejected by your customization
+        """
+    )
+
     @gen.coroutine
     def authenticate(self, handler, data):
         username = data['username']
         password = data['password']
+
+        # Protect against invalid usernames as well as LDAP injection attacks
+        if not re.match(self.valid_username_regex, username):
+            self.log.warn('Invalid username')
+            return None
+
+        # No empty passwords!
+        if password is None or password.strip() == '':
+            self.log.warn('Empty password')
+            return None
 
         userdn = self.username_template.format(username=username)
 
