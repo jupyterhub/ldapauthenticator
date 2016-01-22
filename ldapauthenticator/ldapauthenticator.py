@@ -2,7 +2,7 @@ import ldap3
 from jupyterhub.auth import Authenticator
 
 from tornado import gen
-from traitlets import Unicode, Int, Bool
+from traitlets import Unicode, Int, Bool, Union, List
 
 
 class LDAPAuthenticator(Authenticator):
@@ -39,21 +39,44 @@ class LDAPAuthenticator(Authenticator):
         """
     )
 
+    allowed_groups = Union([
+        Bool(
+            False,
+            config=True,
+            help="Set to false to disable group based access"
+            ),
+        List(
+            config=True,
+            help="List of LDAP Group DNs whose members are allowed access"
+        )
+    ])
+
     @gen.coroutine
     def authenticate(self, handler, data):
         username = data['username']
         password = data['password']
 
-        full_dn = self.username_template.format(username=username)
+        userdn = self.username_template.format(username=username)
 
         server = ldap3.Server(
             self.server_address,
             port=self.server_port,
             use_ssl=self.use_ssl
         )
-        conn = ldap3.Connection(server, user=full_dn, password=password)
+        conn = ldap3.Connection(server, user=userdn, password=password)
 
         if conn.bind():
-            return username
+            if self.allowed_groups is not False:
+                for group in self.allowed_groups:
+                    if conn.search(
+                        group,
+                        search_scope=ldap3.BASE,
+                        search_filter='(member={userdn})'.format(userdn=userdn),
+                        attributes=['member']
+                    ):
+                        return username
+            else:
+                return username
         else:
+            self.log.warn('Invalid password')
             return None

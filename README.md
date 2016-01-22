@@ -35,6 +35,23 @@ The `{username}` is expanded into the username the user provides.
 
 ### Optional configuration ###
 
+#### `LDAPAuthenticator.allowed_groups` ####
+
+LDAP groups whose members are allowed to log in. This must be
+set to either `False` (the default, to disable) or to a list of
+full DNs that have a `member` attribute that includes the current
+user attempting to log in.
+
+As an example, to restrict access only to people in groups
+`researcher` or `operations`,
+
+```python
+c.LDAPAuthenticator.allowed_groups = [
+    'cn=researcher,ou=groups,dc=wikimedia,dc=org',
+    'cn=operations,ou=groups,dc=wikimedia,dc=org'
+]
+```
+
 #### `LDAPAuthenticator.use_ssl` ####
 
 Boolean to specify whether to use SSL encryption when contacting
