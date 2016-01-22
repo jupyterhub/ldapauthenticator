@@ -9,4 +9,7 @@ setup(
     author_email='yuvipanda@riseup.net',
     license='3 Clause BSD',
     packages=['ldapauthenticator'],
+    install_requires=[
+        'ldap3',
+    ]
 )
