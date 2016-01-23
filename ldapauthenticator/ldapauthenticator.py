@@ -27,10 +27,11 @@ class LDAPAuthenticator(Authenticator):
         config=True,
         help='Use SSL to encrypt connection to LDAP server'
     )
-    username_template = Unicode(
+
+    bind_dn_template = Unicode(
         config=True,
         help="""
-        Template from which to construct the full username
+        Template from which to construct the full dn
         when authenticating to LDAP. {username} is replaced
         with the actual username.
 
@@ -78,7 +79,7 @@ class LDAPAuthenticator(Authenticator):
             self.log.warn('Empty password')
             return None
 
-        userdn = self.username_template.format(username=username)
+        userdn = self.bind_dn_template.format(username=username)
 
         server = ldap3.Server(
             self.server_address,
