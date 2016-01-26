@@ -28,7 +28,7 @@ username. For example, if users in your LDAP database have DN of the form
 you would set this config item to be:
 
 ```
-c.LDAPAuthenticator.username_template = 'uid={username},ou=people,dc=wikimedia,dc=org'
+c.LDAPAuthenticator.bind_dn_template = 'uid={username},ou=people,dc=wikimedia,dc=org'
 ```
 
 The `{username}` is expanded into the username the user provides.
