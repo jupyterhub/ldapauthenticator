@@ -41,17 +41,11 @@ class LDAPAuthenticator(Authenticator):
         """
     )
 
-    allowed_groups = Union([
-        Bool(
-            False,
-            config=True,
-            help="Set to false to disable group based access"
-            ),
-        List(
-            config=True,
-            help="List of LDAP Group DNs whose members are allowed access"
-        )
-    ])
+
+    allowed_groups = List(
+	config=True,
+	help="List of LDAP Group DNs whose members are allowed access"
+    )
 
     valid_username_regex = Unicode(
         r'^[a-z][.a-z0-9_-]*$',
@@ -89,7 +83,7 @@ class LDAPAuthenticator(Authenticator):
         conn = ldap3.Connection(server, user=userdn, password=password)
 
         if conn.bind():
-            if self.allowed_groups is not False:
+            if self.allowed_groups:
                 for group in self.allowed_groups:
                     if conn.search(
                         group,
