@@ -1,5 +1,18 @@
 # ldapauthenticator
-Simple LDAP Authenticator Plugin for Jupyter
+Simple LDAP Authenticator Plugin for JupyterHub
+
+## Installation ##
+
+You can install it from pip with:
+
+```
+pip install jupyterhub-ldapauthenticator
+```
+
+## Requirements ##
+
+I've only tested with python3 - anyone willing to test with python2
+is welcome to do so! There's no reason it shouldn't work.
 
 ## Usage ##
 
