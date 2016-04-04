@@ -27,7 +27,27 @@ class LDAPAuthenticator(Authenticator):
         config=True,
         help='Use SSL to encrypt connection to LDAP server'
     )
+    use_search_dn = Bool(
+        False,
+        config=True,
+        help="""
+        Search the full dn of an user before authenticating to LDAP.
+        """
+    )
 
+    search_dn_template = Unicode(
+        "(&(cn={username}))",
+        config=True,
+        help="""
+        Template from which to search the full dn for an user
+        when authenticating to LDAP. {username} is replaced
+        with the actual username.
+
+        Example:
+
+            (&(cn={username}))
+        """
+    )
     bind_dn_template = Unicode(
         config=True,
         help="""
@@ -73,13 +93,41 @@ class LDAPAuthenticator(Authenticator):
             self.log.warn('Empty password')
             return None
 
-        userdn = self.bind_dn_template.format(username=username)
-
         server = ldap3.Server(
             self.server_address,
             port=self.server_port,
             use_ssl=self.use_ssl
         )
+
+        userdn = None
+
+        # If no bind_dn found, get it from the server
+        if self.use_search_dn:
+            co = ldap3.Connection(server)
+            self.log.debug('Try to get full dn from server %s' % self.server_address)
+
+            if co.bind():
+                self.log.debug("Connected to the LDAP server and search full dn for : %s" % username)
+                if co.search('', self.search_dn_template.format(username=username)):
+                    self.log.debug("Found %s client" % len(co.entries))
+
+                    #Get the first one + delete "\n", "DN: " and "DN:"
+                    userdn = str(co.entries[0]).replace("\n","")
+
+                    # Check if we have to correct the result
+                    if userdn.find("DN:") == 0:
+                        userdn = userdn.replace("DN: ", "").replace("DN:", "")
+                else:
+                    self.log.error("Impossible to find user %s" % username)
+            else:
+                self.log.error("Impossible to connect to the LDAP server : '%s'" % self.server_address)
+        else:
+            userdn = self.bind_dn_template.format(username=username)
+
+        if userdn == None:
+            self.log.warn('Invalid username')
+            return None
+
         conn = ldap3.Connection(server, user=userdn, password=password)
 
         if conn.bind():
