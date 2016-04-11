@@ -33,7 +33,7 @@ the LDAP Authenticator can be used:
 Address of the LDAP Server to contact. Just use a bare hostname or IP,
 without a port name or protocol prefix.
 
-#### `LDAPAuthenticator.bind_dn_template` ####
+#### `LDAPAuthenticator.bind_dn_template` #####
 
 Template to use to generate the full dn for a user from the human readable
 username. For example, if users in your LDAP database have DN of the form
@@ -42,6 +42,22 @@ you would set this config item to be:
 
 ```
 c.LDAPAuthenticator.bind_dn_template = 'uid={username},ou=people,dc=wikimedia,dc=org'
+```
+
+The `{username}` is expanded into the username the user provides.
+
+** Or you can use the following options if the dn is not static :**
+
+#### `LDAPAuthenticator.use_search_dn` ####
+
+Search the user on the server to get the full dn
+
+#### `LDAPAuthenticator.search_dn_template` ####
+
+The template to use for searching the user on the server
+
+```
+c.LDAPAuthenticator.search_dn_template = '(&(cn={username}))'
 ```
 
 The `{username}` is expanded into the username the user provides.
