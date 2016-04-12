@@ -102,7 +102,7 @@ class LDAPAuthenticator(Authenticator):
         userdn = None
 
         # If no bind_dn found, get it from the server
-        if self.use_search_dn:
+        if self.use_search_dn or self.bind_dn_template == "":
             co = ldap3.Connection(server)
             self.log.debug('Try to get full dn from server %s' % self.server_address)
 
