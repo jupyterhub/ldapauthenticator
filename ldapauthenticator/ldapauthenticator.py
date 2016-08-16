@@ -97,13 +97,12 @@ class LDAPAuthenticator(Authenticator):
                 for group in self.allowed_groups:
                     if conn.search(
                         group,
-                        search_scope=ldap3.BASE,
-                        search_filter='(member={userdn})'.format(userdn=userdn),
-                        attributes=['member']
+                        search_scope=ldap3.LEVEL,
+                        search_filter="(&(sAMAccountName={username})(memberOf={group}))".format(username=username, group=group)
                     ):
                         return username
             else:
                 return username
         else:
-            self.log.warn('Invalid password')
+            self.log.warn('Invalid password or not apart of valid group')
             return None
