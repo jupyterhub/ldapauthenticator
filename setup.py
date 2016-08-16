@@ -5,11 +5,11 @@ setup(
     version='1.0',
     description='LDAP Authenticator for JupyterHub',
     url='https://github.com/oneklc/ldapauthenticator',
-    author='Yuvi Panda',
+    author='klc',
     author_email='oneklc@gmail.com',
     license='3 Clause BSD',
     packages=['ldapauthenticator'],
     install_requires=[
-        'ldap3',
+        'ldap3','traitlets', 'tornado', 'jupyterhub'
     ]
 )
