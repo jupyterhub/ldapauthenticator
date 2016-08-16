@@ -53,6 +53,15 @@ class LDAPAuthenticator(Authenticator):
 	help="List of LDAP Group DNs whose members are allowed access"
     )
 
+    search_base = Unicode("OU=wikipedia base,DC=wikipedia,DC=com",
+                          config=True,
+                          help="""
+                                The LDAP base to begins searches from
+                          """
+
+
+                          )
+
     valid_username_regex = Unicode(
         r'^[a-z][.a-z0-9_-]*$',
         config=True,
@@ -96,7 +105,7 @@ class LDAPAuthenticator(Authenticator):
             if self.allowed_groups:
                 for group in self.allowed_groups:
                     if conn.search(
-                        group,
+                            self.search_base,
                         search_scope=ldap3.LEVEL,
                         search_filter="(&(sAMAccountName={username})(memberOf={group}))".format(username=username, group=group)
                     ):
