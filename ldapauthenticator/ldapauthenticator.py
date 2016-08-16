@@ -22,6 +22,12 @@ class LDAPAuthenticator(Authenticator):
         else:
             return 389  # default plaintext port for LDAP
 
+    use_ntlm = Bool(
+        True,
+        config=True,
+        help='Use the NTLM authentication protocol'
+    )
+
     use_ssl = Bool(
         True,
         config=True,
@@ -80,7 +86,11 @@ class LDAPAuthenticator(Authenticator):
             port=self.server_port,
             use_ssl=self.use_ssl
         )
-        conn = ldap3.Connection(server, user=userdn, password=password)
+        if self.use_ntlm:
+            conn = ldap3.Connection(server, user=userdn, password=password, authentication=ldap3.NTLM)
+            self.log.info("using NTLM authentication protocol")
+        else:
+            conn = ldap3.Connection(server, user=userdn, password=password)
 
         if conn.bind():
             if self.allowed_groups:
