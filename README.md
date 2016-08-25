@@ -51,6 +51,19 @@ The `{username}` is expanded into the username the user provides.
 
 ### Optional configuration ###
 
+
+#### LDAPAuthenticator.use_ntlm ####
+http://ldap3.readthedocs.io/bind.html#ntlm
+Uses NTLM authentication protocol instead of default. True by default.
+bind_dn_template above needs to be in a different format: DOMAIN//{username}
+
+
+```
+c.use_ntlm = True #is the default
+c.LDAPAuthenticator.bind_dn_template = 'wikimedia//{username}'
+
+```
+
 #### `LDAPAuthenticator.allowed_groups` ####
 
 LDAP groups whose members are allowed to log in. This must be
