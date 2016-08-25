@@ -44,6 +44,9 @@ you would set this config item to be:
 c.LDAPAuthenticator.bind_dn_template = 'uid={username},ou=people,dc=wikimedia,dc=org'
 ```
 
+Don't forget the preceeding `c.` for setting configuration parameters! JupyterHub
+uses [traitlets](https://traitlets.readthedocs.io) for configuration, and the `c` represents the [config object](https://traitlets.readthedocs.io/en/stable/config.html).
+
 The `{username}` is expanded into the username the user provides.
 
 ### Optional configuration ###
