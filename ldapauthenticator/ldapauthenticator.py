@@ -43,8 +43,8 @@ class LDAPAuthenticator(Authenticator):
 
 
     allowed_groups = List(
-	config=True,
-	help="List of LDAP Group DNs whose members are allowed access"
+        config=True,
+        help="List of LDAP Group DNs whose members are allowed access"
     )
 
     valid_username_regex = Unicode(
@@ -92,8 +92,15 @@ class LDAPAuthenticator(Authenticator):
                         attributes=['member']
                     ):
                         return username
+                # If we reach here, then none of the groups matched
+                self.log.warn('User {username} not in any of the allowed groups'.format(
+                    username=userdn
+                ))
+                return None
             else:
                 return username
         else:
-            self.log.warn('Invalid password')
+            self.log.warn('Invalid password for user {username}'.format(
+                username=userdn,
+            ))
             return None
