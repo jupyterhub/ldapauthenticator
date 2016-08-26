@@ -14,6 +14,17 @@ pip install jupyterhub-ldapauthenticator
 I've only tested with python3 - anyone willing to test with python2
 is welcome to do so! There's no reason it shouldn't work.
 
+## Logging people out ##
+
+If you make any changes to JupyterHub's authentication setup that changes
+which group of users is allowed to login (such as changing `allowed_groups`
+or even just turning on LDAPAuthenticator), you *have* to change the
+jupyterhub cookie secret, or users who were previously logged in and did
+not log out would continue to be able to log in!
+
+You can do this by deleting the `jupyterhub_cookie_secret` file. Note
+that this will log out *all* users who are currently logged in.
+
 ## Usage ##
 
 You can enable this authenticator with the folling lines in your
