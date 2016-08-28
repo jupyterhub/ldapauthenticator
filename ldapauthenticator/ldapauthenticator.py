@@ -1,7 +1,7 @@
 import ldap3
 import re
-from jupyterhub.auth import Authenticator
 
+from jupyterhub.auth import Authenticator
 from tornado import gen
 from traitlets import Unicode, Int, Bool, Union, List
 
@@ -58,6 +58,31 @@ class LDAPAuthenticator(Authenticator):
         """
     )
 
+    lookup_dn = Bool(
+        False,
+        config=True,
+        help='Look up the user\'s DN based on an attribute'
+    )
+
+    user_search_base = Unicode(
+        config=True,
+        help="""Base for looking up user accounts in the directory.
+
+        Example:
+
+            ou=people,dc=wikimedia,dc=org
+        """
+    )
+
+    user_attribute = Unicode(
+        config=True,
+        help="""LDAP attribute that stores the user's username.
+
+        For most LDAP servers, this is uid.  For Active Directory, it is
+        sAMAccountName.
+        """
+    )
+
     @gen.coroutine
     def authenticate(self, handler, data):
         username = data['username']
@@ -84,6 +109,24 @@ class LDAPAuthenticator(Authenticator):
 
         if conn.bind():
             if self.allowed_groups:
+                if self.lookup_dn:
+                    # In some cases, like AD, we don't bind with the DN, and need to discover it.
+                    conn.search(
+                        search_base=self.user_search_base,
+                        search_scope=ldap3.SUBTREE,
+                        search_filter='({userattr}={username})'.format(
+                            userattr=self.user_attribute,
+                            username=username
+                        ),
+                        attributes=[self.user_attribute]
+                    )
+
+                    if len(conn.response) == 0:
+                        self.log.warn('User with {userattr}={username} not found in directory'.format(
+                            userattr=self.user_attribute, username=username))
+                        return None
+                    userdn = conn.response[0]['dn']
+
                 for group in self.allowed_groups:
                     if conn.search(
                         group,

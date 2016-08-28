@@ -99,9 +99,41 @@ the LDAP server. Highly recommended that this be left to `True`
 Port to use to contact the LDAP server. Defaults to 389 if no SSL
 is being used, and 636 is SSL is being used.
 
+#### `LDAPAuthenticator.lookup_dn` ####
+
+Whether to try a reverse lookup to obtain the user's DN.  Some LDAP servers,
+such as Active Directory, don't always bind with the true DN, so this allows
+us to discover it based on the username.
+
+```python
+c.LDAPAuthenticator.lookup_dn = True
+```
+
+#### `LDAPAuthenticator.user_search_base` ####
+
+Only used with `lookup_dn=True`.  Defines the search base for looking up users
+in the directory.
+
+```python
+c.LDAPAuthenticator.user_search_base = 'ou=People,dc=example,dc=com'
+```
+
+#### `LDAPAuthenticator.user_attribute` ####
+
+Only used with `lookup_dn=True`.  Defines the attribute that stores a user's
+username in your directory.
+
+```python
+# Active Directory
+c.LDAPAuthenticator.user_attribute = 'sAMAccountName'
+
+# OpenLDAP
+c.LDAPAuthenticator.user_attribute = 'uid'
+```
+
 ## Compatibility ##
 
 This has been tested against an OpenLDAP server, with the client
-running Python 3.4. Verifications of this code workign well with
+running Python 3.4. Verifications of this code working well with
 other LDAP setups welcome, as are bug reports and patches to make
 it work with other LDAP setups!
