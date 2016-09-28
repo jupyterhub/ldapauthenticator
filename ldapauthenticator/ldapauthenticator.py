@@ -28,7 +28,7 @@ class LDAPAuthenticator(Authenticator):
         help='Use SSL to encrypt connection to LDAP server'
     )
 
-    bind_dn_template = Unicode(
+    bind_dn_template = List(
         config=True,
         help="""
         Template from which to construct the full dn
@@ -97,17 +97,26 @@ class LDAPAuthenticator(Authenticator):
         if password is None or password.strip() == '':
             self.log.warn('Empty password')
             return None
+        
+        isBound = False
+        for dn in self.bind_dn_template:
+            #self.log.debug("LOOPING DN")
+            userdn = dn.format(username=username)
+            self.log.debug("DN: '%s'", userdn)
+            server = ldap3.Server(
+                self.server_address,
+                port=self.server_port,
+                use_ssl=self.use_ssl
+            )
+            self.log.debug("GET LDAP CONNECTION FOR USER: '%s'", username)
+            conn = ldap3.Connection(server, user=userdn, password=password)
+            self.log.debug("GOT LDAP CONNECTION FOR USER: '%s'", conn)
+            isBound = conn.bind()
+            self.log.debug("CONN_BIND: "+ str(isBound) + ":" + username ) 
+            if isBound:
+                break
 
-        userdn = self.bind_dn_template.format(username=username)
-
-        server = ldap3.Server(
-            self.server_address,
-            port=self.server_port,
-            use_ssl=self.use_ssl
-        )
-        conn = ldap3.Connection(server, user=userdn, password=password)
-
-        if conn.bind():
+        if isBound:
             if self.allowed_groups:
                 if self.lookup_dn:
                     # In some cases, like AD, we don't bind with the DN, and need to discover it.
