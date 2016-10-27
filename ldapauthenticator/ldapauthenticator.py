@@ -41,7 +41,6 @@ class LDAPAuthenticator(Authenticator):
         """
     )
 
-
     allowed_groups = List(
         config=True,
         help="List of LDAP Group DNs whose members are allowed access"
@@ -128,11 +127,19 @@ class LDAPAuthenticator(Authenticator):
                     userdn = conn.response[0]['dn']
 
                 for group in self.allowed_groups:
+                    groupfilter = (
+                        '(|'
+                        '(member={userdn})'
+                        '(uniqueMember={userdn})'
+                        '(memberUid={uid})'
+                        ')'
+                    ).format(userdn=userdn, uid=username)
+                    groupattributes = ['member', 'uniqueMember', 'memberUid']
                     if conn.search(
                         group,
                         search_scope=ldap3.BASE,
-                        search_filter='(member={userdn})'.format(userdn=userdn),
-                        attributes=['member']
+                        search_filter=groupfilter,
+                        attributes=groupattributes
                     ):
                         return username
                 # If we reach here, then none of the groups matched
