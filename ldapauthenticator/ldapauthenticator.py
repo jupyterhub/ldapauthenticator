@@ -200,6 +200,8 @@ class LDAPAuthenticator(Authenticator):
                         self.log.info('User {userattr}={username} added as local user ({useradd})'.format(
                             userattr=self.user_attribute, username=username, useradd=useradd))
                 return username
+            else:
+                return username
         else:
             self.log.warn('Invalid password for user {username}'.format(
                 username=userdn,
