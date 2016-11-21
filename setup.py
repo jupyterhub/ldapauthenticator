@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='jupyterhub-ldapauthenticator',
-    version='1.0',
+    version='1.1',
     description='LDAP Authenticator for JupyterHub',
     url='https://github.com/yuvipanda/ldapauthenticator',
     author='Yuvi Panda',
