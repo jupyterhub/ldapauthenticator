@@ -11,5 +11,6 @@ setup(
     packages=['ldapauthenticator'],
     install_requires=[
         'ldap3',
+        'jupyterhub',
     ]
 )
