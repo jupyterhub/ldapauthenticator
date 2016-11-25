@@ -131,6 +131,40 @@ c.LDAPAuthenticator.user_attribute = 'sAMAccountName'
 c.LDAPAuthenticator.user_attribute = 'uid'
 ```
 
+#### `LDAPAuthenticator.auto_bind` ####
+
+Specify if the bind will be performed automatically when defining the Connection object.
+It can be one of AUTO_BIND_NONE, AUTO_BIND_NO_TLS, AUTO_BIND_TLS_BEFORE_BIND,
+AUTO_BIND_TLS_AFTER_BIND as specified in ldap3.
+
+```python
+import ldap3
+c.LDAPAuthenticator.auto_bind = ldap3.AUTO_BIND_TLS_AFTER_BIND
+```
+
+#### `LDAPAuthenticator.use_tls` ####
+
+Boolean to specify whether to use TLS encryption connection to LDAP server. The default
+value is `False`. If you use TLS, you can create a TLS instance by setting the following.
+
+* LDAPAuthenticator.tls_local_private_key_file
+* LDAPAuthenticator.tls_local_certificate_file
+* LDAPAuthenticator.tls_validate
+* LDAPAuthenticator.tls_version
+* LDAPAuthenticator.tls_ca_certs_data
+* LDAPAuthenticator.tls_local_private_key_password
+* LDAPAuthenticator.tls_ciphers
+
+These settings are passed directly to the constructor of ldap3.Tls. Please refer to
+[the manual of ldap3](http://ldap3.readthedocs.io/ssltls.html) for details of setting.
+
+```python
+import ssl
+c.LDAPAuthenticator.use_tls = True
+c.LDAPAuthenticator.tls_validate = ssl.CERT_REQUIRED
+c.LDAPAuthenticator.tls_version = ssl.PROTOCOL_TLSv1
+```
+
 ## Compatibility ##
 
 This has been tested against an OpenLDAP server, with the client
