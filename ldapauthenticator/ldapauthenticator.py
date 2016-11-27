@@ -3,7 +3,7 @@ import re
 
 from jupyterhub.auth import Authenticator
 from tornado import gen
-from traitlets import Unicode, Int, Bool, Union, List
+from traitlets import Unicode, Int, Bool, List
 
 
 class LDAPAuthenticator(Authenticator):
@@ -89,12 +89,12 @@ class LDAPAuthenticator(Authenticator):
 
         # Protect against invalid usernames as well as LDAP injection attacks
         if not re.match(self.valid_username_regex, username):
-            self.log.warn('Invalid username')
+            self.log.warn('username:%s Illegal characters in username, must match regex %s', username, self.valid_username_regex)
             return None
 
         # No empty passwords!
         if password is None or password.strip() == '':
-            self.log.warn('Empty password')
+            self.log.warn('username:%s Login denied for blank password', username)
             return None
 
         userdn = self.bind_dn_template.format(username=username)
@@ -121,11 +121,11 @@ class LDAPAuthenticator(Authenticator):
                     )
 
                     if len(conn.response) == 0:
-                        self.log.warn('User with {userattr}={username} not found in directory'.format(
-                            userattr=self.user_attribute, username=username))
+                        self.log.warn('username:%s No such user entry found when looking up with attribute %s', username, self.user_attribute)
                         return None
                     userdn = conn.response[0]['dn']
 
+                self.log.debug('username:%s Using dn %s', username, userdn)
                 for group in self.allowed_groups:
                     groupfilter = (
                         '(|'
@@ -143,9 +143,7 @@ class LDAPAuthenticator(Authenticator):
                     ):
                         return username
                 # If we reach here, then none of the groups matched
-                self.log.warn('User {username} not in any of the allowed groups'.format(
-                    username=userdn
-                ))
+                self.log.warn('username:%s User not in any of the allowed groups', username)
                 return None
             else:
                 return username
