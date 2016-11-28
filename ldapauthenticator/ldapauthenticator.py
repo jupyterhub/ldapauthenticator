@@ -9,11 +9,19 @@ from traitlets import Unicode, Int, Bool, List
 class LDAPAuthenticator(Authenticator):
     server_address = Unicode(
         config=True,
-        help='Address of LDAP server to contact'
+        help="""
+        Address of the LDAP server to contact.
+
+        Could be an IP address or hostname.
+        """
     )
     server_port = Int(
         config=True,
-        help='Port on which to contact LDAP server',
+        help="""
+        Port on which to contact the LDAP server.
+
+        Defaults to `636` if `use_ssl` is set, `389` otherwise.
+        """
     )
 
     def _server_port_default(self):
@@ -25,7 +33,11 @@ class LDAPAuthenticator(Authenticator):
     use_ssl = Bool(
         True,
         config=True,
-        help='Use SSL to encrypt connection to LDAP server'
+        help="""
+        Use SSL to communicate with the LDAP server.
+
+        Highly recommended! Your LDAP server must be configured to support this, however.
+        """
     )
 
     bind_dn_template = Unicode(
@@ -33,7 +45,12 @@ class LDAPAuthenticator(Authenticator):
         help="""
         Template from which to construct the full dn
         when authenticating to LDAP. {username} is replaced
-        with the actual username.
+        with the actual username used to log in.
+
+        If your LDAP is set in such a way that the userdn can not
+        be formed from a template, but must be looked up with an attribute
+        (such as uid or sAMAccountName), please see `lookup_dn`. It might
+        be particularly relevant for ActiveDirectory installs.
 
         Example:
 
@@ -43,39 +60,80 @@ class LDAPAuthenticator(Authenticator):
 
     allowed_groups = List(
         config=True,
-        help="List of LDAP Group DNs whose members are allowed access"
+        allow_none=True,
+        default=None,
+        help="""
+        List of LDAP group DNs that users could be members of to be granted access.
+
+        If a user is in any one of the listed groups, then that user is granted access.
+        Membership is tested by fetching info about each group and looking for the User's
+        dn to be a value of one of `member` or `uniqueMember`, *or* if the username being
+        used to log in with is value of the `uid`.
+
+        Set to an empty list or None to allow all users that have an LDAP account to log in,
+        without performing any group membership checks.
+        """
     )
 
+    # FIXME: Use something other than this? THIS IS LAME, akin to websites restricting things you
+    # can use in usernames / passwords to protect from SQL injection!
     valid_username_regex = Unicode(
         r'^[a-z][.a-z0-9_-]*$',
         config=True,
-        help="""Regex to use to validate usernames before sending to LDAP
+        help="""
+        Regex for validating usernames - those that do not match this regex will be rejected.
 
-        Also acts as a security measure to prevent LDAP injection. If you
-        are customizing this, be careful to ensure that attempts to do LDAP
-        injection are rejected by your customization
+        This is primarily used as a measure against LDAP injection, which has fatal security
+        considerations. The default works for most LDAP installations, but some users might need
+        to modify it to fit their custom installs. If you are modifying it, be sure to understand
+        the implications of allowing additional characters in usernames and what that means for
+        LDAP injection issues. See https://www.owasp.org/index.php/LDAP_injection for an overview
+        of LDAP injection.
         """
     )
 
     lookup_dn = Bool(
         False,
         config=True,
-        help='Look up the user\'s DN based on an attribute'
+        help="""
+        Form user's DN by looking up an entry from directory
+
+        By default, LDAPAuthenticator finds the user's DN by using `bind_dn_template`.
+        However, in some installations, the user's DN does not contain the username, and
+        hence needs to be looked up. You can set this to True and then use `user_search_base`
+        and `user_attribute` to accomplish this.
+        """
     )
 
     user_search_base = Unicode(
         config=True,
-        help="""Base for looking up user accounts in the directory.
+        default=None,
+        allow_none=True,
+        help="""
+        Base for looking up user accounts in the directory, if `lookup_dn` is set to True.
 
-        Example:
+        LDAPAuthenticator will search all objects matching under this base where the `user_attribute`
+        is set to the current username to form the userdn.
 
-            ou=people,dc=wikimedia,dc=org
+        For example, if all users objects existed under the base ou=people,dc=wikimedia,dc=org, and
+        the username users use is set with the attribute `uid`, you can use the following config:
+
+        ```
+        c.LDAPAuthenticator.lookup_dn = True
+        c.LDAPAuthenticator.user_search_base = 'ou=people,dc=wikimedia,dc=org'
+        c.LDAPAuthenticator.user_attribute = 'uid'
+        ```
         """
     )
 
     user_attribute = Unicode(
         config=True,
-        help="""LDAP attribute that stores the user's username.
+        default=None,
+        allow_none=True,
+        help="""
+        Attribute containing user's name, if `lookup_dn` is set to True.
+
+        See `user_search_base` for info on how this attribute is used.
 
         For most LDAP servers, this is uid.  For Active Directory, it is
         sAMAccountName.
