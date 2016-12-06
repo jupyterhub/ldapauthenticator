@@ -99,22 +99,32 @@ class LDAPAuthenticator(Authenticator):
             return None
         
         isBound = False
-        for dn in self.bind_dn_template:
-            #self.log.debug("LOOPING DN")
-            userdn = dn.format(username=username)
-            self.log.debug("DN: '%s'", userdn)
+        if isinstance(self.bind_dn_template, list):
+            for dn in self.bind_dn_template:
+                #self.log.debug("LOOPING DN")
+                userdn = dn.format(username=username)
+                self.log.debug("DN: '%s'", userdn)
+                server = ldap3.Server(
+                    self.server_address,
+                    port=self.server_port,
+                    use_ssl=self.use_ssl
+                )
+                self.log.debug("GET LDAP CONNECTION FOR USER: '%s'", username)
+                conn = ldap3.Connection(server, user=userdn, password=password)
+                self.log.debug("GOT LDAP CONNECTION FOR USER: '%s'", conn)
+                isBound = conn.bind()
+                self.log.debug("CONN_BIND: "+ str(isBound) + ":" + username ) 
+                if isBound:
+                    break
+        else:
+            userdn = self.bind_dn_template.format(username=username)
             server = ldap3.Server(
                 self.server_address,
                 port=self.server_port,
                 use_ssl=self.use_ssl
             )
-            self.log.debug("GET LDAP CONNECTION FOR USER: '%s'", username)
             conn = ldap3.Connection(server, user=userdn, password=password)
-            self.log.debug("GOT LDAP CONNECTION FOR USER: '%s'", conn)
             isBound = conn.bind()
-            self.log.debug("CONN_BIND: "+ str(isBound) + ":" + username ) 
-            if isBound:
-                break
 
         if isBound:
             if self.allowed_groups:
