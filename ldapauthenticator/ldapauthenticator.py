@@ -28,7 +28,8 @@ class LDAPAuthenticator(Authenticator):
         help='Use SSL to encrypt connection to LDAP server'
     )
 
-    bind_dn_template = List(
+    bind_dn_template = Union(
+        [List(),Unicode()],
         config=True,
         help="""
         Template from which to construct the full dn
