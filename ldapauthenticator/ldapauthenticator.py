@@ -100,6 +100,7 @@ class LDAPAuthenticator(Authenticator):
             return None
         
         isBound = False
+        self.log.debug("TYPE= '%s'",isinstance(self.bind_dn_template, list))
         if isinstance(self.bind_dn_template, list):
             for dn in self.bind_dn_template:
                 #self.log.debug("LOOPING DN")
