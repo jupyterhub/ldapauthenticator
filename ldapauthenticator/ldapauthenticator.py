@@ -36,9 +36,14 @@ class LDAPAuthenticator(Authenticator):
         when authenticating to LDAP. {username} is replaced
         with the actual username.
 
-        Example:
-
+        Unicode Example:
             uid={username},ou=people,dc=wikimedia,dc=org
+        
+        List Example:
+            [
+            	uid={username},ou=people,dc=wikimedia,dc=org,
+            	uid={username},ou=Developers,dc=wikimedia,dc=org
+        	]
         """
     )
 
@@ -88,7 +93,20 @@ class LDAPAuthenticator(Authenticator):
     def authenticate(self, handler, data):
         username = data['username']
         password = data['password']
-
+        # Get LDAP Connection
+        def getConnection(userdn, username, password):
+            server = ldap3.Server(
+                self.server_address,
+                port=self.server_port,
+                use_ssl=self.use_ssl
+            )
+            self.log.debug('Attempting to bind {username} with {userdn}'.format(
+                    username=username,
+                    userdn=userdn
+            ))
+            conn = ldap3.Connection(server, user=userdn, password=password)
+            return conn
+        
         # Protect against invalid usernames as well as LDAP injection attacks
         if not re.match(self.valid_username_regex, username):
             self.log.warn('Invalid username')
@@ -101,19 +119,11 @@ class LDAPAuthenticator(Authenticator):
         
         isBound = False
         self.log.debug("TYPE= '%s'",isinstance(self.bind_dn_template, list))
+        # In case, there are multiple binding templates
         if isinstance(self.bind_dn_template, list):
             for dn in self.bind_dn_template:
                 userdn = dn.format(username=username)
-                server = ldap3.Server(
-                    self.server_address,
-                    port=self.server_port,
-                    use_ssl=self.use_ssl
-                )
-                self.log.debug('Attempting to bind {username} with {userdn}'.format(
-                    username=username,
-                    userdn=userdn
-                ))
-                conn = ldap3.Connection(server, user=userdn, password=password)
+                conn = getConnection(userdn, username, password)
                 isBound = conn.bind()
                 self.log.debug('Status of user bind {username} with {userdn} : {isBound}'.format(
                     username=username,
@@ -124,12 +134,7 @@ class LDAPAuthenticator(Authenticator):
                     break
         else:
             userdn = self.bind_dn_template.format(username=username)
-            server = ldap3.Server(
-                self.server_address,
-                port=self.server_port,
-                use_ssl=self.use_ssl
-            )
-            conn = ldap3.Connection(server, user=userdn, password=password)
+            conn = getConnection(userdn, username, password)
             isBound = conn.bind()
 
         if isBound:
