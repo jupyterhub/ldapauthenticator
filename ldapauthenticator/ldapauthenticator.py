@@ -40,7 +40,8 @@ class LDAPAuthenticator(Authenticator):
         """
     )
 
-    bind_dn_template = Unicode(
+    bind_dn_template = Union(
+        [List(),Unicode()],
         config=True,
         help="""
         Template from which to construct the full dn
@@ -52,9 +53,14 @@ class LDAPAuthenticator(Authenticator):
         (such as uid or sAMAccountName), please see `lookup_dn`. It might
         be particularly relevant for ActiveDirectory installs.
 
-        Example:
-
+        Unicode Example:
             uid={username},ou=people,dc=wikimedia,dc=org
+        
+        List Example:
+            [
+            	uid={username},ou=people,dc=wikimedia,dc=org,
+            	uid={username},ou=Developers,dc=wikimedia,dc=org
+        	]
         """
     )
 
@@ -144,7 +150,20 @@ class LDAPAuthenticator(Authenticator):
     def authenticate(self, handler, data):
         username = data['username']
         password = data['password']
-
+        # Get LDAP Connection
+        def getConnection(userdn, username, password):
+            server = ldap3.Server(
+                self.server_address,
+                port=self.server_port,
+                use_ssl=self.use_ssl
+            )
+            self.log.debug('Attempting to bind {username} with {userdn}'.format(
+                    username=username,
+                    userdn=userdn
+            ))
+            conn = ldap3.Connection(server, user=userdn, password=password)
+            return conn
+        
         # Protect against invalid usernames as well as LDAP injection attacks
         if not re.match(self.valid_username_regex, username):
             self.log.warn('username:%s Illegal characters in username, must match regex %s', username, self.valid_username_regex)
@@ -154,17 +173,28 @@ class LDAPAuthenticator(Authenticator):
         if password is None or password.strip() == '':
             self.log.warn('username:%s Login denied for blank password', username)
             return None
+        
+        isBound = False
+        self.log.debug("TYPE= '%s'",isinstance(self.bind_dn_template, list))
+        # In case, there are multiple binding templates
+        if isinstance(self.bind_dn_template, list):
+            for dn in self.bind_dn_template:
+                userdn = dn.format(username=username)
+                conn = getConnection(userdn, username, password)
+                isBound = conn.bind()
+                self.log.debug('Status of user bind {username} with {userdn} : {isBound}'.format(
+                    username=username,
+                    userdn=userdn,
+                    isBound=isBound
+                ))                
+                if isBound:
+                    break
+        else:
+            userdn = self.bind_dn_template.format(username=username)
+            conn = getConnection(userdn, username, password)
+            isBound = conn.bind()
 
-        userdn = self.bind_dn_template.format(username=username)
-
-        server = ldap3.Server(
-            self.server_address,
-            port=self.server_port,
-            use_ssl=self.use_ssl
-        )
-        conn = ldap3.Connection(server, user=userdn, password=password)
-
-        if conn.bind():
+        if isBound:
             if self.allowed_groups:
                 if self.lookup_dn:
                     # In some cases, like AD, we don't bind with the DN, and need to discover it.

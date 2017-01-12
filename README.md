@@ -47,12 +47,16 @@ without a port name or protocol prefix.
 #### `LDAPAuthenticator.bind_dn_template` ####
 
 Template to use to generate the full dn for a user from the human readable
-username. For example, if users in your LDAP database have DN of the form
-`uid=Yuvipanda,ou=people,dc=wikimedia,dc=org` where Yuvipanda is the username,
+username.This must be set to either empty `[]` or to a list of templates users belong to. 
+For example, if some of the users in your LDAP database have DN of the form
+`uid=Yuvipanda,ou=people,dc=wikimedia,dc=org` and some other users have DN like 
+`uid=Mike,ou=developers,dc=wikimedia,dc=org` where Yuvipanda and Mike are the usernames,
 you would set this config item to be:
 
 ```
-c.LDAPAuthenticator.bind_dn_template = 'uid={username},ou=people,dc=wikimedia,dc=org'
+c.LDAPAuthenticator.bind_dn_template = [
+    'uid={username},ou=people,dc=wikimedia,dc=org',
+    'uid={username},ou=developers,dc=wikimedia,dc=org'
 ```
 
 Don't forget the preceeding `c.` for setting configuration parameters! JupyterHub
