@@ -1,6 +1,8 @@
 import ldap3
 import re
+import ssl
 
+from ldap3.core.exceptions import LDAPException
 from jupyterhub.auth import Authenticator
 from tornado import gen
 from traitlets import Unicode, Int, Bool, List
@@ -140,6 +142,76 @@ class LDAPAuthenticator(Authenticator):
         """
     )
 
+    auto_bind = Unicode(
+        ldap3.AUTO_BIND_NONE,
+        config=True,
+        help="""Specify if the bind will be performed automatically when defining the Connection object.
+
+        It can be one of AUTO_BIND_NONE, AUTO_BIND_NO_TLS, AUTO_BIND_TLS_BEFORE_BIND, AUTO_BIND_TLS_AFTER_BIND as specified in ldap3.
+        """
+    )
+
+    use_tls = Bool(
+        False,
+        config=True,
+        help='Use TLS to encrypt connection to LDAP server'
+    )
+
+    tls_local_private_key_file = Unicode(
+        None,
+        config=True,
+        allow_none=True,
+        help='the file with the private key of the client'
+    )
+
+    tls_local_certificate_file = Unicode(
+        None,
+        config=True,
+        allow_none=True,
+        help='the certificate of the server'
+    )
+
+    tls_validate = Int(
+        ssl.CERT_NONE,
+        config=True,
+        help='specifies if the server certificate must be validated, values can be: CERT_NONE (certificates are ignored), CERT_OPTIONAL (not required, but validated if provided) and CERT_REQUIRED (required and validated)'
+    )
+
+    tls_version = Int(
+        None,
+        config=True,
+        allow_none=True,
+        help='SSL or TLS version to use, can be one of the following: SSLv2, SSLv3, SSLv23, TLSv1 (as per Python 3.3. The version list can be different in other Python versions)'
+    )
+
+    tls_ca_certs_file = Unicode(
+        None,
+        config=True,
+        allow_none=True,
+        help='the file containing the certificates of the certification authorities'
+    )
+
+    tls_ca_certs_data = Unicode(
+        None,
+        config=True,
+        allow_none=True,
+        help='CA certificate data stored in memory'
+    )
+
+    tls_local_private_key_password = Unicode(
+        None,
+        config=True,
+        allow_none=True,
+        help='the password text for the private key'
+    )
+
+    tls_ciphers = Unicode(
+        None,
+        config=True,
+        allow_none=True,
+        help='a string that specify which chipers must be used. It works on recent Python interpreters that allow to change the cipher in the SSLContext or in the the wrap_socket() method, it’s ignored on older versions.'
+    )
+
     @gen.coroutine
     def authenticate(self, handler, data):
         username = data['username']
@@ -157,12 +229,26 @@ class LDAPAuthenticator(Authenticator):
 
         userdn = self.bind_dn_template.format(username=username)
 
-        server = ldap3.Server(
-            self.server_address,
-            port=self.server_port,
-            use_ssl=self.use_ssl
-        )
-        conn = ldap3.Connection(server, user=userdn, password=password)
+        try:
+            tls = ldap3.Tls(
+                local_private_key_file=self.tls_local_private_key_file,
+                local_certificate_file=self.tls_local_certificate_file,
+                validate=self.tls_validate,
+                version=self.tls_version,
+                ca_certs_file=self.tls_ca_certs_file,
+                ca_certs_data=self.tls_ca_certs_data,
+                local_private_key_password=self.tls_local_private_key_password,
+                ciphers=self.tls_ciphers) if self.use_tls else None
+            server = ldap3.Server(
+                self.server_address,
+                port=self.server_port,
+                use_ssl=self.use_ssl,
+                tls=tls
+            )
+            conn = ldap3.Connection(server, user=userdn, password=password, auto_bind=self.auto_bind)
+        except LDAPException as err:
+            self.log.warn(err)
+            return None
 
         if conn.bind():
             if self.allowed_groups:
