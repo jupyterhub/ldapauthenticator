@@ -135,9 +135,47 @@ c.LDAPAuthenticator.user_attribute = 'sAMAccountName'
 c.LDAPAuthenticator.user_attribute = 'uid'
 ```
 
+#### `LDAPAuthenticator.lookup_dn_search_filter` ####
+
+How to query LDAP for user name lookup, if `lookup_dn` is set to True.
+Default value ``'({login_attr}={login})'` should be good enough for most use cases.
+
+
+#### `LDAPAuthenticator.lookup_dn_search_user`, `LDAPAuthenticator.lookup_dn_search_password` ####
+
+Technical account for user lookup, if `lookup_dn` is set to True.
+If both lookup_dn_search_user and lookup_dn_search_password are None, then anonymous LDAP query will be done.
+
+
+#### `LDAPAuthenticator.lookup_dn_user_dn_attribute` ####
+
+Attribute containing user's name needed for  building DN string, if `lookup_dn` is set to True.
+See `user_search_base` for info on how this attribute is used.
+For most LDAP servers, this is username.  For Active Directory, it is cn.
+
 ## Compatibility ##
 
 This has been tested against an OpenLDAP server, with the client
 running Python 3.4. Verifications of this code working well with
 other LDAP setups welcome, as are bug reports and patches to make
 it work with other LDAP setups!
+
+
+## Active Directory integration ##
+
+Please use following options for AD integration. This is useful especially in two cases:
+* LDAP Search requires valid user account in order to query user database
+* DN does not contain login but some other field, like CN (actual login is present in sAMAccountName, and we need to lookup CN)
+
+```python
+c.LDAPAuthenticator.lookup_dn = True
+c.LDAPAuthenticator.lookup_dn_search_filter = '({login_attr}={login})'
+c.LDAPAuthenticator.lookup_dn_search_user = 'ldap_search_user_technical_account'
+c.LDAPAuthenticator.lookup_dn_search_password = 'secret'
+c.LDAPAuthenticator.user_search_base = 'ou=people,dc=wikimedia,dc=org'
+c.LDAPAuthenticator.user_attribute = 'sAMAccountName'
+c.LDAPAuthenticator.lookup_dn_user_dn_attribute = 'cn'
+```
+
+In setup above, first LDAP will be searched (with account ldap_search_user_technical_account) for users that have sAMAccountName=login
+Then DN will be constructed using found CN value.
