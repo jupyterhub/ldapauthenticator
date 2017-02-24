@@ -1,4 +1,5 @@
 import ldap3
+from ldap3.utils.conv import escape_filter_chars
 import re
 
 from jupyterhub.auth import Authenticator
@@ -296,7 +297,7 @@ class LDAPAuthenticator(Authenticator):
                         '(uniqueMember={userdn})'
                         '(memberUid={uid})'
                         ')'
-                    ).format(userdn=userdn, uid=username)
+                    ).format(userdn=escape_filter_chars(userdn), uid=escape_filter_chars(username))
                     groupattributes = ['member', 'uniqueMember', 'memberUid']
                     if conn.search(
                         group,
