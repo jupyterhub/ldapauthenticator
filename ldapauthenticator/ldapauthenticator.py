@@ -91,11 +91,6 @@ class LDAPAuthenticator(Authenticator):
         config=True,
         help="List of attributes to be searched"
     )
-
-    local_user = List(
-        config=True,
-        help="List of additional infos (dict of attributes and useradd command) to create local user accounts"
-    )
     
     
     @gen.coroutine
@@ -178,27 +173,6 @@ class LDAPAuthenticator(Authenticator):
                     self.log.warn('User with {userattr}={username} found more than {len}-fold in directory'.format(
                         userattr=self.user_attribute, username=username, len=len(conn.response)))
                     return None
-                if self.local_user:
-                    import pwd, os
-                    try:
-                        user = pwd.getpwnam(username)
-                    except KeyError: 
-                        this = conn.response[0]
-                        thisEntry = dict()
-                        for attr in self.attributes:
-                            thisEntry.update({attr:this["attributes"][attr][0]})
-                        for info in self.local_user:
-                            ok = True
-                            for attr in list(set(self.attributes)&set(info.keys())):
-                                if info[attr].replace('*','(',1).replace('*',')',1) == thisEntry[attr]:
-                                    ok &= True
-                                else:
-                                    ok = False
-                            if ok:
-                                useradd = info['useradd']
-                        os.system(useradd.format(**thisEntry))
-                        self.log.info('User {userattr}={username} added as local user ({useradd})'.format(
-                            userattr=self.user_attribute, username=username, useradd=useradd))
                 return username
             else:
                 return username
@@ -218,27 +192,11 @@ if __name__ == "__main__":
     c.user_attribute = 'uid'
     c.user_search_base = 'ou=people,dc=organisation,dc=org'
     c.attributes = ['uid','cn','mail','ou','o']
-    # attributes_list is a list of dictionaries of attributes which should be satisfied by a user to be logged in
-    # the additional key 'useradd' is only necessary, if local user accounts should be created
-    # - the value of this key is the system command to be called to create the local user
-    attributes_list = [dict(ou="section1",o="department1",
-                useradd="useradd -m -d /home/ldapuser/department1/{uid} -s /bin/false {uid} -c \"{cn} - {mail}\"\n"),
-                      dict(ou="section2",o="department1",
-                useradd="useradd -m -d /home/ldapuser/department1/{uid} -s /bin/false {uid} -c \"{cn} - {mail}\"\n"),
-                      dict(mail="*@marketing.organisation.org",o="department2",
-                useradd="useradd -m -d /home/ldapuser/marketing/{uid} -s /bin/false {uid} -c \"{cn} - {mail}\"\n"),
-                      dict(ou="finance",o="management",
-                useradd="useradd -m -d /home/ldapuser/finance/{uid} -s /bin/false {uid} -c \"{cn} - {mail}\"\n")]
-    # the following loop builds the ldap search filter based on the above attributes_list
-    sf = ""
-    for attr in attributes_list:
-        if 'ou' in attr:
-            sf += "(&(o={o})(ou={ou}))".format(**attr)
-        elif 'mail' in attr:
-            sf += "(&(o={o})(mail={mail}))".format(**attr)
+    # The following is an example of a search_filter which is build on LDAP AND and OR operations
+    # here in this example as a combination of the LDAP attributes 'ou', 'mail' and 'uid'
+    sf = "(&(o={o})(ou={ou}))".format(o='yourOrganisation',ou='yourOrganisationalUnit')
+    sf += "(&(o={o})(mail={mail}))".format(o='yourOrganisation',mail='yourMailAddress')
     c.search_filter = "(&({{userattr}}={{username}})(|{}))".format(sf)
-    # The next line is only necessary, if local user accounts should be created
-    c.local_user = attributes_list 
     username = input('Username: ')
     passwd = getpass.getpass()
     data = dict(username=username,password=passwd)
