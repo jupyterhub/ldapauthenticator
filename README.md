@@ -153,6 +153,12 @@ Attribute containing user's name needed for  building DN string, if `lookup_dn` 
 See `user_search_base` for info on how this attribute is used.
 For most LDAP servers, this is username.  For Active Directory, it is cn.
 
+#### `LDAPAuthenticator.escape_userdn` ####
+
+If set to True, escape special chars in userdn when authenticating in LDAP.
+On some LDAP servers, when userdn contains chars like '(', ')', '\' authentication may fail when those chars
+are not escaped.
+
 ## Compatibility ##
 
 This has been tested against an OpenLDAP server, with the client

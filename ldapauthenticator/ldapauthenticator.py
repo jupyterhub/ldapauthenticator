@@ -193,6 +193,17 @@ class LDAPAuthenticator(Authenticator):
         """
     )
 
+    escape_userdn = Bool(
+        False,
+        config=True,
+        help="""
+        If set to True, escape special chars in userdn when authenticating in LDAP.
+
+        On some LDAP servers, when userdn contains chars like '(', ')', '\' authentication may fail when those chars
+        are not escaped.
+        """
+    )
+
     def resolve_username(self, username_supplied_by_user):
         if self.lookup_dn:
             server = ldap3.Server(
@@ -213,7 +224,7 @@ class LDAPAuthenticator(Authenticator):
                 )
             )
 
-            conn = ldap3.Connection(server, user=self.lookup_dn_search_user, password=self.lookup_dn_search_password)
+            conn = ldap3.Connection(server, user=self.escape_userdn_if_needed(self.lookup_dn_search_user), password=self.lookup_dn_search_password)
             is_bound = conn.bind()
             if not is_bound:
                 self.log.warn("Can't connect to LDAP")
@@ -234,6 +245,12 @@ class LDAPAuthenticator(Authenticator):
         else:
             return username_supplied_by_user
 
+    def escape_userdn_if_needed(self, userdn):
+        if self.escape_userdn:
+            return escape_filter_chars(userdn)
+        else:
+            return userdn
+
     @gen.coroutine
     def authenticate(self, handler, data):
         username = data['username']
@@ -249,7 +266,7 @@ class LDAPAuthenticator(Authenticator):
                     username=username,
                     userdn=userdn
             ))
-            conn = ldap3.Connection(server, user=escape_filter_chars(userdn), password=password)
+            conn = ldap3.Connection(server, user=self.escape_userdn_if_needed(userdn), password=password)
             return conn
         
         # Protect against invalid usernames as well as LDAP injection attacks
