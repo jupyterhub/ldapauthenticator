@@ -4,7 +4,7 @@ import re
 
 from jupyterhub.auth import Authenticator
 from tornado import gen
-from traitlets import Unicode, Int, Bool, Union, List
+from traitlets import Unicode, Int, Bool, List, Union
 
 
 class LDAPAuthenticator(Authenticator):
