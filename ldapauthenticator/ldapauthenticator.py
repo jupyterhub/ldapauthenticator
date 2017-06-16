@@ -237,6 +237,6 @@ class LDAPAuthenticator(Authenticator):
                 return username
         else:
             self.log.warn('Invalid password for user {username}'.format(
-                username=userdn,
+                username=username,
             ))
             return None
