@@ -135,6 +135,30 @@ c.LDAPAuthenticator.user_attribute = 'sAMAccountName'
 c.LDAPAuthenticator.user_attribute = 'uid'
 ```
 
+#### `LDAPAuthenticator.alternative_username` ####
+Attribute containing user's 'short' name, if `lookup_dn` is set
+to True and user_attribute is set to True.
+
+See `user_search_base` for info on how this attribute is used.
+
+If your LDAP server uses your email of full name as login, the
+creation of the docker container will fail due to the presence
+of the @ symbol.
+
+With this variable you can replace the username passed
+to docker with a short/alternative name or user id.
+
+This variable will also change the username for the connection to change
+from using the CN to use the raw username.
+
+In the example, user_attribute is set to email and alternative_username 
+is set to sAMAccountName
+
+```python
+c.LDAPAuthenticator.user_attribute = 'email'
+c.LDAPAuthenticator.alternative_username = 'sAMAccountName'
+```
+
 ## Compatibility ##
 
 This has been tested against an OpenLDAP server, with the client

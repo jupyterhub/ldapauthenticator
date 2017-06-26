@@ -146,12 +146,39 @@ class LDAPAuthenticator(Authenticator):
         """
     )
 
+
+    alternative_username = Unicode (
+        config=True,
+        default=None,
+        allow_none=True,
+        help="""
+        Attribute containing user's 'short' name, if `lookup_dn` is set
+        to True and user_attribute is set to True.
+
+        See `user_search_base` for info on how this attribute is used.
+
+        If your LDAP server uses your email of full name as login, the
+        creation of the docker container will fail due to the presence
+        of the @ symbol.
+
+        With this variable you can replace the username passed
+        to docker with a short/alternative name or user id.
+
+        This variable will also change the username for the connection to change
+        from using the CN to use the raw username.
+
+        In the example, user_attribute is set to email and alternative_username
+        is set to sAMAccountName
+        """        
+    )
+
     @gen.coroutine
     def authenticate(self, handler, data):
         username = data['username']
         password = data['password']
         # Get LDAP Connection
         def getConnection(userdn, username, password):
+            #self.log.warn("GET CONNECTION: connecting to server '{}:{}' user '{}' pass '{}' DN '{}' SSL {}".format(self.server_address,self.server_port,username,password,userdn,self.use_ssl))
             server = ldap3.Server(
                 self.server_address,
                 port=self.server_port,
@@ -161,7 +188,10 @@ class LDAPAuthenticator(Authenticator):
                     username=username,
                     userdn=userdn
             ))
-            conn = ldap3.Connection(server, user=userdn, password=password)
+
+            #if login is an email and alternative_username is required, use the username to login instead of the DN
+            eff_username = userdn if not self.alternative_username else username
+            conn = ldap3.Connection(server, user=eff_username, password=password)
             return conn
         
         # Protect against invalid usernames as well as LDAP injection attacks
@@ -182,6 +212,7 @@ class LDAPAuthenticator(Authenticator):
                 userdn = dn.format(username=username)
                 conn = getConnection(userdn, username, password)
                 isBound = conn.bind()
+                self.log.warn("connecting to server '{}:{}' user '{}' pass '{}' DN '{}' SSL {}".format(self.server_address,self.server_port,username,password,userdn,self.use_ssl))
                 self.log.debug('Status of user bind {username} with {userdn} : {isBound}'.format(
                     username=username,
                     userdn=userdn,
@@ -195,9 +226,13 @@ class LDAPAuthenticator(Authenticator):
             isBound = conn.bind()
 
         if isBound:
+            self.log.debug("IS BOUND")
             if self.allowed_groups:
+                self.log.debug("HAS ALLOWED GROUPS")
                 if self.lookup_dn:
+                    self.log.debug("HAS LOOKUP DN")
                     # In some cases, like AD, we don't bind with the DN, and need to discover it.
+                    self.log.debug("LOOKUP DN: base '{}' attrib '{}' username '{}'".format(self.user_search_base,self.user_attribute,username))
                     conn.search(
                         search_base=self.user_search_base,
                         search_scope=ldap3.SUBTREE,
@@ -205,16 +240,28 @@ class LDAPAuthenticator(Authenticator):
                             userattr=self.user_attribute,
                             username=username
                         ),
-                        attributes=[self.user_attribute]
+                        attributes=[self.user_attribute] + ([] if not self.alternative_username else [self.alternative_username])
                     )
 
                     if len(conn.response) == 0:
                         self.log.warn('username:%s No such user entry found when looking up with attribute %s', username, self.user_attribute)
                         return None
+
                     userdn = conn.response[0]['dn']
 
+                    self.log.debug("LOOKUP DN: FOUND DN '{}'".format(userdn))
+
+                    if self.alternative_username:
+                        username = conn.response[0]['attributes'][self.alternative_username]
+                        self.log.warn("LOOKUP DN: REPLACING USERNAME WITH FIELD '{}' to '{}'".format(self.alternative_username, username))
+
+                else:
+                    self.log.warn("HAS NO LOOKUP DN")
+
                 self.log.debug('username:%s Using dn %s', username, userdn)
+                self.log.debug("FILTERING GROUP")
                 for group in self.allowed_groups:
+                    self.log.debug("FILTERING GROUP: group '{}' dn '{}' username '{}'".format(group, userdn, username))
                     groupfilter = (
                         '(|'
                         '(member={userdn})'
@@ -229,14 +276,16 @@ class LDAPAuthenticator(Authenticator):
                         search_filter=groupfilter,
                         attributes=groupattributes
                     ):
+                        self.log.debug("FILTERING GROUP: group '{}' found username '{}'".format(group, username))
                         return username
                 # If we reach here, then none of the groups matched
                 self.log.warn('username:%s User not in any of the allowed groups', username)
                 return None
             else:
+                self.log.debug("HAS NO ALLOWED GROUPS")
                 return username
         else:
             self.log.warn('Invalid password for user {username}'.format(
-                username=userdn,
+                username=username,
             ))
             return None
