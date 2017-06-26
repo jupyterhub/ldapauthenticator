@@ -212,7 +212,7 @@ class LDAPAuthenticator(Authenticator):
                 userdn = dn.format(username=username)
                 conn = getConnection(userdn, username, password)
                 isBound = conn.bind()
-                self.log.warn("connecting to server '{}:{}' user '{}' pass '{}' DN '{}' SSL {}".format(self.server_address,self.server_port,username,password,userdn,self.use_ssl))
+                #self.log.warn("connecting to server '{}:{}' user '{}' pass '{}' DN '{}' SSL {}".format(self.server_address,self.server_port,username,password,userdn,self.use_ssl))
                 self.log.debug('Status of user bind {username} with {userdn} : {isBound}'.format(
                     username=username,
                     userdn=userdn,
