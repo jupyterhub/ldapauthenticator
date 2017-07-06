@@ -1,4 +1,5 @@
 # ldapauthenticator
+
 Simple LDAP Authenticator Plugin for JupyterHub
 
 ## Installation ##
@@ -18,7 +19,7 @@ is welcome to do so! There's no reason it shouldn't work.
 
 If you make any changes to JupyterHub's authentication setup that changes
 which group of users is allowed to login (such as changing `allowed_groups`
-or even just turning on LDAPAuthenticator), you *have* to change the
+or even just turning on LDAPAuthenticator), you **must** change the
 jupyterhub cookie secret, or users who were previously logged in and did
 not log out would continue to be able to log in!
 
@@ -27,7 +28,7 @@ that this will log out *all* users who are currently logged in.
 
 ## Usage ##
 
-You can enable this authenticator with the folling lines in your
+You can enable this authenticator with the following lines in your
 `jupyter_config.py`:
 
 ```python
@@ -36,7 +37,7 @@ c.JupyterHub.authenticator_class = 'ldapauthenticator.LDAPAuthenticator'
 
 ### Required configuration ###
 
-At least the following two configuration options must be set before
+At minimum, the following two configuration options must be set before
 the LDAP Authenticator can be used:
 
 #### `LDAPAuthenticator.server_address` ####
@@ -46,12 +47,12 @@ without a port name or protocol prefix.
 
 #### `LDAPAuthenticator.bind_dn_template` ####
 
-Template to use to generate the full dn for a user from the human readable
-username.This must be set to either empty `[]` or to a list of templates users belong to. 
-For example, if some of the users in your LDAP database have DN of the form
-`uid=Yuvipanda,ou=people,dc=wikimedia,dc=org` and some other users have DN like 
-`uid=Mike,ou=developers,dc=wikimedia,dc=org` where Yuvipanda and Mike are the usernames,
-you would set this config item to be:
+Template used to generate the full dn for a user from the human readable
+username. This must be set to either empty `[]` or to a list of templates the
+users belong to. For example, if some of the users in your LDAP database have DN
+of the form `uid=Yuvipanda,ou=people,dc=wikimedia,dc=org` and some other users
+have DN like `uid=Mike,ou=developers,dc=wikimedia,dc=org` where Yuvipanda and
+Mike are the usernames, you would set this config item to be:
 
 ```
 c.LDAPAuthenticator.bind_dn_template = [
@@ -60,7 +61,8 @@ c.LDAPAuthenticator.bind_dn_template = [
 ```
 
 Don't forget the preceeding `c.` for setting configuration parameters! JupyterHub
-uses [traitlets](https://traitlets.readthedocs.io) for configuration, and the `c` represents the [config object](https://traitlets.readthedocs.io/en/stable/config.html).
+uses [traitlets](https://traitlets.readthedocs.io) for configuration, and the
+`c` represents the [config object](https://traitlets.readthedocs.io/en/stable/config.html).
 
 The `{username}` is expanded into the username the user provides.
 
@@ -139,5 +141,23 @@ c.LDAPAuthenticator.user_attribute = 'uid'
 
 This has been tested against an OpenLDAP server, with the client
 running Python 3.4. Verifications of this code working well with
-other LDAP setups welcome, as are bug reports and patches to make
+other LDAP setups are welcome, as are bug reports and patches to make
 it work with other LDAP setups!
+
+## Configuration note on local user creation
+
+Currently, local user creation by the LDAPAuthenticator is unsupported as
+this is insecure since there's no cleanup method for these created users. As a
+result, users who are disabled in LDAP will have access to this for far longer.
+
+Alternatively, there's good support in Linux for integrating LDAP into the
+system user setup directly, and users can just use PAM (which is supported in
+not just JupyterHub, but ssh and a lot of other tools) to log in. You can see
+http://www.tldp.org/HOWTO/archived/LDAP-Implementation-HOWTO/pamnss.html and
+lots of other documentation on the web on how to set up LDAP to provide user
+accounts for your system. Those methods are very widely used, much more secure
+and more widely documented. We recommend you use them rather than have
+JupyterHub create local accounts using the LDAPAuthenticator.
+
+Issue [#19](https://github.com/jupyterhub/ldapauthenticator/issues/19) provides
+additional discussion on local user creation.
