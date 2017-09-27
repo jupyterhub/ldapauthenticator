@@ -32,12 +32,12 @@ class LDAPAuthenticator(Authenticator):
             return 389  # default plaintext port for LDAP
 
     use_ssl = Bool(
-        True,
+        False,
         config=True,
         help="""
         Use SSL to communicate with the LDAP server.
 
-        Highly recommended! Your LDAP server must be configured to support this, however.
+        Deprecated in version 3 of LDAP. Your LDAP server must be configured to support this, however.
         """
     )
 
@@ -277,7 +277,12 @@ class LDAPAuthenticator(Authenticator):
                     username=username,
                     userdn=userdn
             ))
-            conn = ldap3.Connection(server, user=self.escape_userdn_if_needed(userdn), password=password)
+            conn = ldap3.Connection(
+                server,
+                user=self.escape_userdn_if_needed(userdn),
+                password=password,
+                auto_bind=ldap3.AUTO_BIND_TLS_BEFORE_BIND,
+            )
             return conn
         
         # Protect against invalid usernames as well as LDAP injection attacks

@@ -97,8 +97,9 @@ is what most shell username validators do.
 #### `LDAPAuthenticator.use_ssl` ####
 
 Boolean to specify whether to use SSL encryption when contacting
-the LDAP server. Highly recommended that this be left to `True`
-(the default) unless there are very good reasons otherwise.
+the LDAP server. If it is left to `False` (the default)
+`LDAPAuthenticator` will try to upgrade connection with StartTLS.
+Set this to be `True` to start SSL connection.
 
 #### `LDAPAuthenticator.server_port` ####
 
