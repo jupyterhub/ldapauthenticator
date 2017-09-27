@@ -146,6 +146,17 @@ class LDAPAuthenticator(Authenticator):
         """
     )
 
+    search_filter = Unicode(
+        config=True,
+        help="LDAP3 Search Filter whose results are allowed access"
+    )
+
+    attributes = List(
+        config=True,
+        help="List of attributes to be searched"
+    )
+    
+    
     @gen.coroutine
     def authenticate(self, handler, data):
         username = data['username']
@@ -233,6 +244,22 @@ class LDAPAuthenticator(Authenticator):
                 # If we reach here, then none of the groups matched
                 self.log.warn('username:%s User not in any of the allowed groups', username)
                 return None
+            elif self.search_filter:
+                conn.search(
+                    search_base=self.user_search_base,
+                    search_scope=ldap3.SUBTREE,
+                    search_filter=self.search_filter.format(userattr=self.user_attribute,username=username),
+                    attributes=self.attributes
+                )
+                if len(conn.response) == 0:
+                    self.log.warn('User with {userattr}={username} not found in directory'.format(
+                        userattr=self.user_attribute, username=username))
+                    return None
+                elif len(conn.response) > 1:
+                    self.log.warn('User with {userattr}={username} found more than {len}-fold in directory'.format(
+                        userattr=self.user_attribute, username=username, len=len(conn.response)))
+                    return None
+                return username
             else:
                 return username
         else:
@@ -240,3 +267,24 @@ class LDAPAuthenticator(Authenticator):
                 username=username,
             ))
             return None
+
+
+if __name__ == "__main__":
+    import getpass
+    c = LDAPAuthenticator()
+    c.server_address = "ldap.organisation.org"
+    c.server_port = 636
+    c.bind_dn_template = "uid={username},ou=people,dc=organisation,dc=org"
+    c.user_attribute = 'uid'
+    c.user_search_base = 'ou=people,dc=organisation,dc=org'
+    c.attributes = ['uid','cn','mail','ou','o']
+    # The following is an example of a search_filter which is build on LDAP AND and OR operations
+    # here in this example as a combination of the LDAP attributes 'ou', 'mail' and 'uid'
+    sf = "(&(o={o})(ou={ou}))".format(o='yourOrganisation',ou='yourOrganisationalUnit')
+    sf += "(&(o={o})(mail={mail}))".format(o='yourOrganisation',mail='yourMailAddress')
+    c.search_filter = "(&({{userattr}}={{username}})(|{}))".format(sf)
+    username = input('Username: ')
+    passwd = getpass.getpass()
+    data = dict(username=username,password=passwd)
+    rs=c.authenticate(None,data)
+    print(rs.result())
