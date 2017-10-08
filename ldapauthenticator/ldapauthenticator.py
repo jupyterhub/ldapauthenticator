@@ -306,8 +306,12 @@ class LDAPAuthenticator(Authenticator):
         if isinstance(self.bind_dn_template, list):
             for dn in self.bind_dn_template:
                 userdn = dn.format(username=resolved_username)
-                conn = getConnection(userdn, username, password)
-                isBound = conn.bind()
+                try:
+                    conn = getConnection(userdn, username, password)
+                except ldap3.core.exceptions.LDAPBindError:
+                    isBound = False
+                else:
+                    isBound = conn.bind()
                 self.log.debug('Status of user bind {username} with {userdn} : {isBound}'.format(
                     username=username,
                     userdn=userdn,
@@ -317,8 +321,12 @@ class LDAPAuthenticator(Authenticator):
                     break
         else:
             userdn = self.bind_dn_template.format(username=resolved_username)
-            conn = getConnection(userdn, username, password)
-            isBound = conn.bind()
+            try:
+                conn = getConnection(userdn, username, password)
+            except ldap3.core.exceptions.LDAPBindError:
+                isBound = False
+            else:
+                isBound = conn.bind()
 
         if isBound:
             if self.allowed_groups:
