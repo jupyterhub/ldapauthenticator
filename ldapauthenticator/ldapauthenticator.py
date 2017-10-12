@@ -302,31 +302,32 @@ class LDAPAuthenticator(Authenticator):
         if resolved_username is None:
             return None
 
-        # In case, there are multiple binding templates
-        if isinstance(self.bind_dn_template, list):
-            for dn in self.bind_dn_template:
-                userdn = dn.format(username=resolved_username)
-                try:
-                    conn = getConnection(userdn, username, password)
-                except ldap3.core.exceptions.LDAPBindError:
-                    isBound = False
-                else:
-                    isBound = conn.bind()
-                self.log.debug('Status of user bind {username} with {userdn} : {isBound}'.format(
-                    username=username,
-                    userdn=userdn,
-                    isBound=isBound
-                ))                
-                if isBound:
-                    break
-        else:
-            userdn = self.bind_dn_template.format(username=resolved_username)
+        bind_dn_template = self.bind_dn_template
+        if isinstance(bind_dn_template, str):
+            # bind_dn_template should be of type List[str]
+            bind_dn_template = [bind_dn_template]
+
+        for dn in self.bind_dn_template:
+            userdn = dn.format(username=resolved_username)
+            msg = 'Status of user bind {username} with {userdn} : {isBound}'
             try:
                 conn = getConnection(userdn, username, password)
-            except ldap3.core.exceptions.LDAPBindError:
+            except ldap3.core.exceptions.LDAPBindError as exc:
                 isBound = False
+                msg += '\n{exc_type}: {exc_msg}'.format(
+                    exc_type=exc.__class__.__name__,
+                    exc_msg=exc.args[0] if exc.args else ''
+                ) 
             else:
                 isBound = conn.bind()
+            msg = msg.format(
+                username=username,
+                userdn=userdn,
+                isBound=isBound
+            )
+            self.log.debug(msg)                
+            if isBound:
+                break
 
         if isBound:
             if self.allowed_groups:
