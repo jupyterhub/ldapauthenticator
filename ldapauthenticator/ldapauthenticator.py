@@ -307,7 +307,7 @@ class LDAPAuthenticator(Authenticator):
             # bind_dn_template should be of type List[str]
             bind_dn_template = [bind_dn_template]
 
-        for dn in self.bind_dn_template:
+        for dn in bind_dn_template:
             userdn = dn.format(username=resolved_username)
             msg = 'Status of user bind {username} with {userdn} : {isBound}'
             try:
