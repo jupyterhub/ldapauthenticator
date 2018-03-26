@@ -204,6 +204,20 @@ class LDAPAuthenticator(Authenticator):
         """
     )
 
+    normalize_username_function = List(
+        None,
+        config=True,
+        help="""
+        TODO
+        """
+    )
+
+    def normalize_username(self, username_supplied_by_user):
+        if self.normalize_username_function[0] is not None and callable(self.normalize_username_function[0]):
+            return self.normalize_username_function[0](username_supplied_by_user)
+        else:
+            return username_supplied_by_user
+
     def resolve_username(self, username_supplied_by_user):
         if self.lookup_dn:
             server = ldap3.Server(
@@ -285,6 +299,11 @@ class LDAPAuthenticator(Authenticator):
             )
             return conn
         
+        # Normalize username with a configurable function. Perform before the valid_username_regex matching
+        username = self.normalize_username(username)
+        if username is None:
+            return None
+
         # Protect against invalid usernames as well as LDAP injection attacks
         if not re.match(self.valid_username_regex, username):
             self.log.warn('username:%s Illegal characters in username, must match regex %s', username, self.valid_username_regex)
