@@ -208,7 +208,11 @@ class LDAPAuthenticator(Authenticator):
         None,
         config=True,
         help="""
-        TODO
+        If not `None`, the first element must be a Python callable, which is used to normalize the
+        supplied username before authentication. Other elements are ignored.
+
+        For example, normalize supplied usernames to lowercase:
+        `c.LDAPAuthenticator.normalize_username_function = [str.lower]`
         """
     )
 
