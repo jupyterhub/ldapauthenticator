@@ -56,7 +56,7 @@ class LDAPAuthenticator(Authenticator):
 
         Unicode Example:
             uid={username},ou=people,dc=wikimedia,dc=org
-        
+
         List Example:
             [
             	uid={username},ou=people,dc=wikimedia,dc=org,
@@ -148,6 +148,33 @@ class LDAPAuthenticator(Authenticator):
 
         For most LDAP servers, this is uid.  For Active Directory, it is
         sAMAccountName.
+        """
+    )
+
+
+
+    alternative_username = Unicode (
+        config=True,
+        default=None,
+        allow_none=True,
+        help="""
+        Attribute containing user's 'short' name, if `lookup_dn` is set
+        to True and user_attribute is set to True.
+
+        See `user_search_base` for info on how this attribute is used.
+
+        If your LDAP server uses your email of full name as login, the
+        creation of the docker container will fail due to the presence
+        of the @ symbol.
+
+        With this variable you can replace the username passed
+        to docker with a short/alternative name or user id.
+
+        This variable will also change the username for the connection to change
+        from using the CN to use the raw username.
+
+        In the example, user_attribute is set to email and alternative_username
+        is set to sAMAccountName
         """
     )
 
@@ -260,14 +287,14 @@ class LDAPAuthenticator(Authenticator):
         config=True,
         help="List of attributes to be searched"
     )
-    
-    
+
     @gen.coroutine
     def authenticate(self, handler, data):
         username = data['username']
         password = data['password']
         # Get LDAP Connection
         def getConnection(userdn, username, password):
+            #self.log.warn("GET CONNECTION: connecting to server '{}:{}' user '{}' pass '{}' DN '{}' SSL {}".format(self.server_address,self.server_port,username,password,userdn,self.use_ssl))
             server = ldap3.Server(
                 self.server_address,
                 port=self.server_port,
@@ -277,14 +304,18 @@ class LDAPAuthenticator(Authenticator):
                     username=username,
                     userdn=userdn
             ))
+
+            #if login is an email and alternative_username is required, use the username to login instead of the DN
+            eff_username = userdn if not self.alternative_username else username
             conn = ldap3.Connection(
                 server,
-                user=self.escape_userdn_if_needed(userdn),
+                user=self.escape_userdn_if_needed(eff_username),
                 password=password,
                 auto_bind=ldap3.AUTO_BIND_TLS_BEFORE_BIND,
             )
+
             return conn
-        
+
         # Protect against invalid usernames as well as LDAP injection attacks
         if not re.match(self.valid_username_regex, username):
             self.log.warn('username:%s Illegal characters in username, must match regex %s', username, self.valid_username_regex)
@@ -311,28 +342,33 @@ class LDAPAuthenticator(Authenticator):
             userdn = dn.format(username=resolved_username)
             msg = 'Status of user bind {username} with {userdn} : {isBound}'
             try:
+                #self.log.warn("connecting to server '{}:{}' user '{}' pass '{}' DN '{}' SSL {}".format(self.server_address,self.server_port,username,password,userdn,self.use_ssl))
                 conn = getConnection(userdn, username, password)
             except ldap3.core.exceptions.LDAPBindError as exc:
                 isBound = False
                 msg += '\n{exc_type}: {exc_msg}'.format(
                     exc_type=exc.__class__.__name__,
                     exc_msg=exc.args[0] if exc.args else ''
-                ) 
+                )
             else:
                 isBound = conn.bind()
+
             msg = msg.format(
                 username=username,
                 userdn=userdn,
                 isBound=isBound
             )
-            self.log.debug(msg)                
+            self.log.debug(msg)
             if isBound:
                 break
 
         if isBound:
+            self.log.debug("IS BOUND")
             if self.allowed_groups:
                 self.log.debug('username:%s Using dn %s', username, userdn)
+                self.log.debug("FILTERING GROUP")
                 for group in self.allowed_groups:
+                    self.log.debug("FILTERING GROUP: group '{}' dn '{}' username '{}'".format(group, userdn, username))
                     groupfilter = (
                         '(|'
                         '(member={userdn})'
@@ -347,6 +383,7 @@ class LDAPAuthenticator(Authenticator):
                         search_filter=groupfilter,
                         attributes=groupattributes
                     ):
+                        self.log.debug("FILTERING GROUP: group '{}' found username '{}'".format(group, username))
                         return username
                 # If we reach here, then none of the groups matched
                 self.log.warn('username:%s User not in any of the allowed groups', username)
@@ -368,6 +405,7 @@ class LDAPAuthenticator(Authenticator):
                     return None
                 return username
             else:
+                self.log.debug("HAS NO ALLOWED GROUPS")
                 return username
         else:
             self.log.warn('Invalid password for user {username}'.format(
