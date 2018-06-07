@@ -1,8 +1,8 @@
-import ldap3
-from ldap3.utils.conv import escape_filter_chars
 import re
 
 from jupyterhub.auth import Authenticator
+import ldap3
+from ldap3.utils.conv import escape_filter_chars
 from tornado import gen
 from traitlets import Unicode, Int, Bool, List, Union
 
