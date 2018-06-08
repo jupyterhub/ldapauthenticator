@@ -302,7 +302,7 @@ class LDAPAuthenticator(Authenticator):
         if resolved_username is None:
             return None
 
-        resolved_username = re.subn(r"[^\\],", r"\,", resolved_username)[0]
+        resolved_username = re.subn(r"([^\\]),", r"\1\,", resolved_username)[0]
 
         bind_dn_template = self.bind_dn_template
         if isinstance(bind_dn_template, str):
