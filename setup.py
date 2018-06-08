@@ -1,6 +1,11 @@
 from setuptools import setup
 
-from ldapauthenticator import __version__ as version
+
+version = '1.2.0'
+
+
+with open("./ldapauthenticator/__init__.py", 'a') as f:
+    f.write("\n__version__ = '{}'\n".format(version))
 
 
 setup(
