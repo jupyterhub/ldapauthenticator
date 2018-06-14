@@ -57,10 +57,11 @@ of the form `uid=Yuvipanda,ou=people,dc=wikimedia,dc=org` and some other users
 have DN like `uid=Mike,ou=developers,dc=wikimedia,dc=org` where Yuvipanda and
 Mike are the usernames, you would set this config item to be:
 
-```
+```python
 c.LDAPAuthenticator.bind_dn_template = [
-    'uid={username},ou=people,dc=wikimedia,dc=org',
-    'uid={username},ou=developers,dc=wikimedia,dc=org'
+    "uid={username},ou=people,dc=wikimedia,dc=org",
+    "uid={username},ou=developers,dc=wikimedia,dc=org",
+]
 ```
 
 Don't forget the preceeding `c.` for setting configuration parameters! JupyterHub
@@ -84,8 +85,8 @@ As an example, to restrict access only to people in groups
 
 ```python
 c.LDAPAuthenticator.allowed_groups = [
-    'cn=researcher,ou=groups,dc=wikimedia,dc=org',
-    'cn=operations,ou=groups,dc=wikimedia,dc=org'
+    "cn=researcher,ou=groups,dc=wikimedia,dc=org",
+    "cn=operations,ou=groups,dc=wikimedia,dc=org",
 ]
 ```
 
@@ -145,7 +146,7 @@ c.LDAPAuthenticator.user_attribute = 'uid'
 #### `LDAPAuthenticator.lookup_dn_search_filter` ####
 
 How to query LDAP for user name lookup, if `lookup_dn` is set to True.
-Default value ``'({login_attr}={login})'` should be good enough for most use cases.
+Default value `'({login_attr}={login})'` should be good enough for most use cases.
 
 
 #### `LDAPAuthenticator.lookup_dn_search_user`, `LDAPAuthenticator.lookup_dn_search_password` ####
