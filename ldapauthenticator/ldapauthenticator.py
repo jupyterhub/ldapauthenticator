@@ -302,7 +302,10 @@ class LDAPAuthenticator(Authenticator):
         if resolved_username is None:
             return None
 
-        resolved_username = re.subn(r"([^\\]),", r"\1\,", resolved_username)[0]
+        if self.lookup_dn:
+            if str(self.lookup_dn_user_dn_attribute).upper() == 'CN':
+                # Only escape commas if the lookup attribute is CN
+                resolved_username = re.subn(r"([^\\]),", r"\1\,", resolved_username)[0]
 
         bind_dn_template = self.bind_dn_template
         if isinstance(bind_dn_template, str):
