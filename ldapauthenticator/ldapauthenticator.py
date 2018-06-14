@@ -247,6 +247,7 @@ class LDAPAuthenticator(Authenticator):
 
     def escape_userdn_if_needed(self, userdn):
         if self.escape_userdn:
+            userdn = re.subn(r"([^\\]),", r"\1\,", userdn)[0]
             return escape_filter_chars(userdn)
         else:
             return userdn
@@ -301,8 +302,6 @@ class LDAPAuthenticator(Authenticator):
         resolved_username = self.resolve_username(username)
         if resolved_username is None:
             return None
-
-        resolved_username = re.subn(r"([^\\]),", r"\1\,", resolved_username)[0]
 
         bind_dn_template = self.bind_dn_template
         if isinstance(bind_dn_template, str):
