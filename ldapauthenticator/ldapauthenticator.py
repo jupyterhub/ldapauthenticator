@@ -1,5 +1,5 @@
 import re
-
+import ssl
 from jupyterhub.auth import Authenticator
 import ldap3
 from ldap3.utils.conv import escape_filter_chars
@@ -38,6 +38,27 @@ class LDAPAuthenticator(Authenticator):
         Use SSL to communicate with the LDAP server.
 
         Deprecated in version 3 of LDAP. Your LDAP server must be configured to support this, however.
+        """
+    )
+
+    server_ca_file = Unicode(
+        config=True,
+        help="""
+        Path of the CA certificate file for the *secure* LDAP server
+        """
+    )
+
+    client_certificate_file = Unicode(
+        config=True,
+        help="""
+        Path of the certificate file for the LDAP client
+        """
+    )
+
+    client_key_file = Unicode(
+        config=True,
+        help="""
+        Path of the key file for the LDAP client
         """
     )
 
@@ -268,11 +289,14 @@ class LDAPAuthenticator(Authenticator):
         password = data['password']
         # Get LDAP Connection
         def getConnection(userdn, username, password):
-            server = ldap3.Server(
-                self.server_address,
-                port=self.server_port,
-                use_ssl=self.use_ssl
-            )
+            if self.use_ssl:
+                tlsSettings = ldap3.Tls(local_private_key_file=self.client_key_file,
+                        local_certificate_file=self.client_certificate_file,
+                        ca_certs_file=self.server_ca_file,
+                        validate=ssl.CERT_REQUIRED)
+                server = ldap3.Server(self.server_address, port=self.server_port, use_ssl=True, tls=tlsSettings)
+            else:
+                server = ldap3.Server(self.server_address, port=self.server_port, use_ssl=False)
             self.log.debug('Attempting to bind {username} with {userdn}'.format(
                     username=username,
                     userdn=userdn
