@@ -49,6 +49,8 @@ class LDAPAuthenticator(Authenticator):
         config=True,
         help="""
         Path of the CA certificate file for the *secure* LDAP server
+
+        If you're receiving `CERTIFICATE_VERIFY_FAILED` errors, you have to use this setting.
         """
     )
 
@@ -56,6 +58,8 @@ class LDAPAuthenticator(Authenticator):
         config=True,
         help="""
         Path of the certificate file for the LDAP client
+
+        If you're receiving `SSLV3_ALERT_HANDSHAKE_FAILURE` errors, you have to use this setting.
         """
     )
 
@@ -63,6 +67,8 @@ class LDAPAuthenticator(Authenticator):
         config=True,
         help="""
         Path of the key file for the LDAP client
+
+        If you're receiving `SSLV3_ALERT_HANDSHAKE_FAILURE` errors, you have to use this setting.
         """
     )
 
@@ -327,9 +333,18 @@ class LDAPAuthenticator(Authenticator):
 
     def get_connection(self, userdn, password):
         if self.use_ssl:
-            tlsSettings = ldap3.Tls(local_private_key_file=self.client_key_file,
-                    local_certificate_file=self.client_certificate_file,
-                    ca_certs_file=self.server_ca_file,
+            ca_cert = None
+            client_cert = None
+            client_key = None
+            if self.server_ca_file != '':
+                ca_cert = self.server_ca_file
+            if self.client_certificate_file != '':
+                client_cert = self.client_certificate_file
+            if self.client_key_file != '':
+                client_key = self.client_key_file
+            tlsSettings = ldap3.Tls(local_private_key_file=client_key,
+                    local_certificate_file=client_cert,
+                    ca_certs_file=ca_cert,
                     validate=ssl.CERT_REQUIRED)
             server = ldap3.Server(
                 self.server_address, port=self.server_port, use_ssl=True, tls=tlsSettings
