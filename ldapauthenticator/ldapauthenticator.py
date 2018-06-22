@@ -204,7 +204,7 @@ class LDAPAuthenticator(Authenticator):
         """
     )
 
-    def resolve_username(self, username_supplied_by_user):
+    def resolve_username_and_userdn(self, username_supplied_by_user):
         if self.lookup_dn:
             server = ldap3.Server(
                 self.server_address,
@@ -228,7 +228,7 @@ class LDAPAuthenticator(Authenticator):
             is_bound = conn.bind()
             if not is_bound:
                 self.log.warn("Can't connect to LDAP")
-                return None
+                return None, None
 
             conn.search(
                 search_base=self.user_search_base,
@@ -240,10 +240,10 @@ class LDAPAuthenticator(Authenticator):
             if len(conn.response) == 0 or 'attributes' not in conn.response[0].keys():
                 self.log.warn('username:%s No such user entry found when looking up with attribute %s', username_supplied_by_user,
                               self.user_attribute)
-                return None
-            return conn.response[0]['attributes'][self.lookup_dn_user_dn_attribute]
+                return None, None
+            return conn.response[0]['attributes'][self.lookup_dn_user_dn_attribute], conn.response[0]['dn']
         else:
-            return username_supplied_by_user
+            return username_supplied_by_user, None
 
     def escape_userdn_if_needed(self, userdn):
         if self.escape_userdn:
@@ -298,7 +298,7 @@ class LDAPAuthenticator(Authenticator):
         isBound = False
         self.log.debug("TYPE= '%s'",isinstance(self.bind_dn_template, list))
 
-        resolved_username = self.resolve_username(username)
+        resolved_username, userdn = self.resolve_username_and_userdn(username)
         if resolved_username is None:
             return None
 
@@ -308,31 +308,36 @@ class LDAPAuthenticator(Authenticator):
                 resolved_username = re.subn(r"([^\\]),", r"\1\,", resolved_username)[0]
 
         bind_dn_template = self.bind_dn_template
-        if isinstance(bind_dn_template, str):
-            # bind_dn_template should be of type List[str]
-            bind_dn_template = [bind_dn_template]
 
-        for dn in bind_dn_template:
-            userdn = dn.format(username=resolved_username)
-            msg = 'Status of user bind {username} with {userdn} : {isBound}'
-            try:
-                conn = getConnection(userdn, username, password)
-            except ldap3.core.exceptions.LDAPBindError as exc:
-                isBound = False
-                msg += '\n{exc_type}: {exc_msg}'.format(
-                    exc_type=exc.__class__.__name__,
-                    exc_msg=exc.args[0] if exc.args else ''
+        if bind_dn_template == []:
+            isBound = True
+            conn = getConnection(userdn, username, password)
+        else:
+            if isinstance(bind_dn_template, str):
+                # bind_dn_template should be of type List[str]
+                bind_dn_template = [bind_dn_template]
+
+            for dn in bind_dn_template:
+                userdn = dn.format(username=resolved_username)
+                msg = 'Status of user bind {username} with {userdn} : {isBound}'
+                try:
+                    conn = getConnection(userdn, username, password)
+                except ldap3.core.exceptions.LDAPBindError as exc:
+                    isBound = False
+                    msg += '\n{exc_type}: {exc_msg}'.format(
+                        exc_type=exc.__class__.__name__,
+                        exc_msg=exc.args[0] if exc.args else ''
+                    )
+                else:
+                    isBound = conn.bind()
+                msg = msg.format(
+                    username=username,
+                    userdn=userdn,
+                    isBound=isBound
                 )
-            else:
-                isBound = conn.bind()
-            msg = msg.format(
-                username=username,
-                userdn=userdn,
-                isBound=isBound
-            )
-            self.log.debug(msg)
-            if isBound:
-                break
+                self.log.debug(msg)
+                if isBound:
+                    break
 
         if isBound:
             if self.allowed_groups:
