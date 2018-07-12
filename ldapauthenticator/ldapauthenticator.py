@@ -51,7 +51,8 @@ class LDAPAuthenticator(Authenticator):
         help="""
         Template from which to construct the full dn
         when authenticating to LDAP. {username} is replaced
-        with the actual username used to log in.
+        with the user's resolved username (i.e. their CN attribute).
+        {login} is replaced with the actual username used to login.
 
         If your LDAP is set in such a way that the userdn can not
         be formed from a template, but must be looked up with an attribute
@@ -63,9 +64,12 @@ class LDAPAuthenticator(Authenticator):
 
         List Example:
             [
-            	uid={username},ou=people,dc=wikimedia,dc=org,
-            	uid={username},ou=Developers,dc=wikimedia,dc=org
-        	]
+              uid={username},ou=people,dc=wikimedia,dc=org,
+              uid={username},ou=Developers,dc=wikimedia,dc=org
+            ]
+
+        Active Directory Example:
+            DOMAIN\{login}
         """,
     )
 
@@ -142,6 +146,20 @@ class LDAPAuthenticator(Authenticator):
         """,
     )
 
+    group_search_base = Unicode(
+        config=True,
+        default=user_search_base,
+        allow_none=True,
+        help="""
+        Base for looking up groups in the directory. Defaults to the value of user_search_base if unset.
+
+        For example:
+        ```
+        c.LDAPAuthenticator.group_search_base = 'ou=groups,dc=wikimedia,dc=org'
+        ```
+        """
+    )
+
     user_attribute = Unicode(
         config=True,
         default=None,
@@ -154,6 +172,66 @@ class LDAPAuthenticator(Authenticator):
         For most LDAP servers, this is uid.  For Active Directory, it is
         sAMAccountName.
         """,
+    )
+
+    memberof_attribute = Unicode(
+        config=True,
+        default_value='memberOf',
+        allow_none=False,
+        help="""
+        Attribute attached to user objects containing the list of groups the user is a member of.
+
+        Defaults to 'memberOf', you probably won't need to change this.
+        """
+    )
+
+    get_groups_from_user = Bool(
+        False,
+        config=True,
+        help="""
+        If set, this will confirm a user's group membership by querying the
+        user object in LDAP directly, and querying the attribute set in
+        `memberof_attribute` (defaults to `memberOf`).
+
+        If unset (the default), then each authorised group set in
+        `allowed_group` is queried from LDAP and matched against the user's DN.
+
+        This should be set when the LDAP server is Microsoft Active Directory,
+        and you probably also want to set the `activedirectory` configuration
+        setting to 'true' as well'
+        """
+    )
+
+    activedirectory = Bool(
+        False,
+        config=True,
+        help="""
+        If set, this treats the remote LDAP server as a Microsoft Active
+        Directory instance, and will optimise group membership queries where
+        `allow_groups` is used. This requires `get_groups_from_user` to be
+        enabled.
+
+        This allows nested groups to be resolved when using Active Directory.
+
+        Example Active Directory configuration:
+        ```
+        c.LDAPAuthenticator.bind_dn_template = 'DOMAIN\{login}'
+        c.LDAPAuthenticator.lookup_dn = False
+        c.LDAPAuthenticator.activedirectory = True
+        c.LDAPAuthenticator.get_groups_from_user = True
+        c.LDAPAuthenticator.lookup_dn_user_dn_attribute = 'distinguishedName'
+        c.LDAPAuthenticator.lookup_dn_search_filter = '({login_attr}={login})'
+        c.LDAPAuthenticator.lookup_dn_search_user = 'readonly'
+        c.LDAPAuthenticator.lookup_dn_search_password = 'notarealpassword'
+        c.LDAPAuthenticator.user_attribute = 'sAMAccountName'
+        c.LDAPAuthenticator.user_search_base = 'OU=Users,DC=example,DC=org'
+        c.LDAPAuthenticator.group_search_base = 'OU=Groups,DC=example,DC=org'
+
+        c.LDAPAuthenticator.admin_users = {'Administrator'}
+        c.LDAPAuthenticator.allowed_groups = [
+            'CN=JupyterHub_Users,OU=Groups,DC=example,DC=org']
+        ```
+        """
     )
 
     lookup_dn_search_filter = Unicode(
@@ -190,7 +268,7 @@ class LDAPAuthenticator(Authenticator):
         default_value=None,
         allow_none=True,
         help="""
-        Attribute containing user's name needed for  building DN string, if `lookup_dn` is set to True.
+        Attribute containing user's name needed for building DN string, if `lookup_dn` is set to True.
 
         See `user_search_base` for info on how this attribute is used.
 
@@ -234,7 +312,8 @@ class LDAPAuthenticator(Authenticator):
         if self.escape_userdn:
             search_dn = escape_filter_chars(search_dn)
         conn = self.get_connection(
-            userdn=search_dn, password=self.lookup_dn_search_password
+            userdn=search_dn,
+            password=self.lookup_dn_search_password,
         )
         is_bound = conn.bind()
         if not is_bound:
@@ -331,6 +410,42 @@ class LDAPAuthenticator(Authenticator):
         username = data["username"]
         password = data["password"]
 
+        def get_user_groups(username):
+            if self.activedirectory:
+                self.log.debug('Active Directory enabled')
+                user_dn = self.resolve_username(username)
+                search_filter='(member:1.2.840.113556.1.4.1941:={dn})'.format(dn=escape_filter_chars(user_dn))
+                search_attribs=['cn'] # We don't actually care, we just want the DN
+                search_base=self.group_search_base,
+                self.log.debug('LDAP Group query: user_dn:[%s] filter:[%s]', user_dn, search_filter)
+            else:
+                search_filter=self.lookup_dn_search_filter.format(login_attr=self.user_attribute, login=username)
+                search_attribs=[self.memberof_attribute]
+                search_base=self.user_search_base,
+                self.log.debug('LDAP Group query: username:[%s] filter:[%s]', username, search_filter)
+
+            conn.search(
+                search_base=self.group_search_base,
+                search_scope=ldap3.SUBTREE,
+                search_filter=search_filter,
+                attributes=search_attribs)
+
+            if self.activedirectory:
+                user_groups = []
+
+                if len(conn.response) == 0:
+                    return None
+
+                for g in conn.response:
+                    user_groups.append(g['dn'])
+                return user_groups
+            else:
+                if len(conn.response) == 0 or 'attributes' not in conn.response[0].keys():
+                    self.log.debug('User %s is not a member of any groups (via memberOf)', username)
+                    return None
+                else:
+                    return conn.response[0]['attributes'][self.memberof_attribute]
+
         # Protect against invalid usernames as well as LDAP injection attacks
         if not re.match(self.valid_username_regex, username):
             self.log.warning(
@@ -339,6 +454,10 @@ class LDAPAuthenticator(Authenticator):
                 self.valid_username_regex,
             )
             return None
+
+        # Allow us to reference the actual username the user typed (rather than
+        # what we might resolve it to later)
+        login = username
 
         # No empty passwords!
         if password is None or password.strip() == "":
@@ -372,7 +491,7 @@ class LDAPAuthenticator(Authenticator):
             if not dn:
                 self.log.warning("Ignoring blank 'bind_dn_template' entry!")
                 continue
-            userdn = dn.format(username=username)
+            userdn = dn.format(username=username, login=login)
             if self.escape_userdn:
                 userdn = escape_filter_chars(userdn)
             msg = "Attempting to bind {username} with {userdn}"
@@ -430,24 +549,37 @@ class LDAPAuthenticator(Authenticator):
         if self.allowed_groups:
             self.log.debug("username:%s Using dn %s", username, userdn)
             found = False
-            for group in self.allowed_groups:
-                group_filter = (
-                    "(|"
-                    "(member={userdn})"
-                    "(uniqueMember={userdn})"
-                    "(memberUid={uid})"
-                    ")"
-                )
-                group_filter = group_filter.format(userdn=userdn, uid=username)
-                group_attributes = ["member", "uniqueMember", "memberUid"]
-                found = conn.search(
-                    group,
-                    search_scope=ldap3.BASE,
-                    search_filter=group_filter,
-                    attributes=group_attributes,
-                )
-                if found:
-                    break
+
+            if self.get_groups_from_user:
+                user_groups = get_user_groups(login)
+                if user_groups is None:
+                    self.log.debug('Username %s has no group membership', username)
+                    return None
+                else:
+                    self.log.debug('Username %s is a member of %d groups', username, len(user_groups))
+                    for group in self.allowed_groups:
+                        if group in user_groups:
+                            self.log.info('User %s is a member of permitted group %s', username, group)
+                            return username
+            else:
+    for group in self.allowed_groups:
+        group_filter = (
+            "(|"
+            "(member={userdn})"
+            "(uniqueMember={userdn})"
+            "(memberUid={uid})"
+            ")"
+        )
+        group_filter = group_filter.format(userdn=userdn, uid=username)
+        group_attributes = ["member", "uniqueMember", "memberUid"]
+        found = conn.search(
+            group,
+            search_scope=ldap3.BASE,
+            search_filter=group_filter,
+            attributes=group_attributes,
+        )
+        if found:
+            break
             if not found:
                 # If we reach here, then none of the groups matched
                 msg = "username:{username} User not in any of the allowed groups"
@@ -462,7 +594,6 @@ class LDAPAuthenticator(Authenticator):
             self.log.debug("username:%s attributes:%s", username, user_info)
             return {"name": username, "auth_state": user_info}
         return username
-
 
 if __name__ == "__main__":
     import getpass
