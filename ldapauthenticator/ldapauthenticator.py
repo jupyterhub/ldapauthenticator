@@ -85,7 +85,7 @@ class LDAPAuthenticator(Authenticator):
     # FIXME: Use something other than this? THIS IS LAME, akin to websites restricting things you
     # can use in usernames / passwords to protect from SQL injection!
     valid_username_regex = Unicode(
-        r'^[a-z][.a-z0-9_-]*$',
+        r'^[a-zA-Z][.a-zA-Z0-9_-]*$',
         config=True,
         help="""
         Regex for validating usernames - those that do not match this regex will be rejected.
