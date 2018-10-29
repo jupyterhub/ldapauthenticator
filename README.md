@@ -72,6 +72,7 @@ uses [traitlets](https://traitlets.readthedocs.io) for configuration, and the
 
 The `{username}` is expanded into the username the user provides.
 
+If `lookup_dn` is True this setting may be empty and the DN from resolving the username will be used
 
 ### Optional configuration ###
 

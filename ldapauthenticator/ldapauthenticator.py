@@ -235,7 +235,7 @@ class LDAPAuthenticator(Authenticator):
         if not is_bound:
             msg = "Failed to connect to LDAP server with search user '{search_dn}'"
             self.log.warning(msg.format(search_dn=search_dn))
-            return None
+            return None, None
 
         search_filter = self.lookup_dn_search_filter.format(
             login_attr=self.user_attribute, login=username_supplied_by_user
@@ -272,8 +272,13 @@ class LDAPAuthenticator(Authenticator):
                     username=username_supplied_by_user, attribute=self.user_attribute
                 )
             )
-            return None
-        return conn.response[0]["attributes"][self.lookup_dn_user_dn_attribute]
+            return None, None
+
+        ret = (
+            conn.response[0]["attributes"][self.lookup_dn_user_dn_attribute],
+            conn.response[0]["dn"],
+        )
+        return ret
 
     def get_connection(self, userdn, password):
         server = ldap3.Server(
@@ -307,7 +312,7 @@ class LDAPAuthenticator(Authenticator):
             return None
 
         if self.lookup_dn:
-            username = self.resolve_username(username)
+            username, resolved_dn = self.resolve_username(username)
             if not username:
                 return None
             if isinstance(username, list):
@@ -319,6 +324,8 @@ class LDAPAuthenticator(Authenticator):
                 username = re.subn(r"([^\\]),", r"\1\,", username)[0]
 
         bind_dn_template = self.bind_dn_template
+        if not bind_dn_template and self.lookup_dn:
+            bind_dn_template = [resolved_dn]
         if isinstance(bind_dn_template, str):
             # bind_dn_template should be of type List[str]
             bind_dn_template = [bind_dn_template]
