@@ -172,6 +172,12 @@ are not escaped.
 An optional list of attributes to be fetched for a user after login.
 If found these will be returned as `auth_state`.
 
+#### `LDAPAuthenticator.use_lookup_dn_username` ####
+
+If set to True (the default) the username used to build the DN string is returned as the username when `lookup_dn` is True.
+
+When authenticating on a Linux machine against an AD server this might return something different from the supplied UNIX username. In this case setting this option to False might be a solution.
+
 ## Compatibility ##
 
 This has been tested against an OpenLDAP server, with the client
