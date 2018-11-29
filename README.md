@@ -167,6 +167,12 @@ If set to True, escape special chars in userdn when authenticating in LDAP.
 On some LDAP servers, when userdn contains chars like '(', ')', '\' authentication may fail when those chars
 are not escaped.
 
+#### `LDAPAuthenticator.use_lookup_dn_username` ####
+
+If set to True (the default) the username used to build the DN string is returned as the username when `lookup_dn` is True.
+
+When authenticating on a Linux machine against an AD server this might return something different from the supplied UNIX username. In this case setting this option to False might be a solution.
+
 ## Compatibility ##
 
 This has been tested against an OpenLDAP server, with the client

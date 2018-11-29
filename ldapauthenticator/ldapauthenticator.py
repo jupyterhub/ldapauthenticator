@@ -214,6 +214,16 @@ class LDAPAuthenticator(Authenticator):
         help="List of attributes to be searched"
     )
 
+    use_lookup_dn_username = Bool(
+        True,
+        config=True,
+        help="""
+        If set to true uses the `lookup_dn_user_dn_attribute` attribute as username instead of the supplied one.
+
+        This can be useful in an heterogeneous environment, when supplying a UNIX username to authenticate against AD.
+        """
+    )
+
     def resolve_username(self, username_supplied_by_user):
         search_dn = self.lookup_dn_search_user
         if self.escape_userdn:
@@ -410,7 +420,10 @@ class LDAPAuthenticator(Authenticator):
                 self.log.warn(msg.format(username=username))
                 return None
 
-        return username
+        if self.use_lookup_dn_username:
+            return username
+        else:
+            return data['username']
 
 
 if __name__ == "__main__":
