@@ -270,7 +270,20 @@ class LDAPAuthenticator(Authenticator):
                 attribute=self.user_attribute,
             ))
             return None
-        return conn.response[0]['attributes'][self.lookup_dn_user_dn_attribute]
+
+        user_dn = conn.response[0]['attributes'][self.lookup_dn_user_dn_attribute]
+        if isinstance(user_dn, (list,)):
+            msg = (
+                "String expected, but List found for user '{username}' "
+                "when looking up attribute '{attribute}'"
+            )
+            self.log.warn(msg.format(
+                username=username_supplied_by_user,
+                attribute=self.lookup_dn_user_dn_attribute
+            ))
+            user_dn = user_dn[0]
+
+        return user_dn
 
     def get_connection(self, userdn, password):
         server = ldap3.Server(
