@@ -42,7 +42,7 @@ At minimum, the following two configuration options must be set before
 the LDAP Authenticator can be used:
 
 
-#### `LDAPAuthenticator.server_address` ####
+#### `LDAPAuthenticator.server_hosts` ####
 
 Address of the LDAP Server to contact. Just use a bare hostname or IP,
 without a port name or protocol prefix.
