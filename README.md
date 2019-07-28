@@ -1,5 +1,7 @@
 # ldapauthenticator
 
+[![Build Status](https://travis-ci.com/jupyterhub/ldapauthenticator.svg?branch=master)](https://travis-ci.com/jupyterhub/ldapauthenticator)
+
 Simple LDAP Authenticator Plugin for JupyterHub
 
 ## Installation ##
@@ -11,7 +13,7 @@ pip install jupyterhub-ldapauthenticator
 ```
 ...or using conda with:
 ```
-conda install -c conda-forge jupyterhub-ldapauthenticator 
+conda install -c conda-forge jupyterhub-ldapauthenticator
 ```
 
 
@@ -219,4 +221,3 @@ JupyterHub create local accounts using the LDAPAuthenticator.
 
 Issue [#19](https://github.com/jupyterhub/ldapauthenticator/issues/19) provides
 additional discussion on local user creation.
-
