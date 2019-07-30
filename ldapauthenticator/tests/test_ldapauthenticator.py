@@ -93,10 +93,10 @@ async def test_ldap_auth_search_filter(authenticator):
 
 
 async def test_ldap_auth_user_info_attributes(authenticator):
-    authenticator.user_info_attributes = ['employeeType']
+    authenticator.user_info_attributes = ["employeeType"]
     # proper username and password in allowed group
     authorized = await authenticator.get_authenticated_user(
         None, {"username": "fry", "password": "fry"}
     )
     assert authorized["name"] == "fry"
-    assert authorized["auth_state"] == {'employeeType': ['Delivery boy']}
+    assert authorized["auth_state"] == {"employeeType": ["Delivery boy"]}
