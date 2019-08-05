@@ -92,8 +92,8 @@ async def test_ldap_auth_search_filter(authenticator):
     assert authorized is None
 
 
-async def test_ldap_auth_user_info_attributes(authenticator):
-    authenticator.user_info_attributes = ["employeeType"]
+async def test_ldap_auth_state_attributes(authenticator):
+    authenticator.auth_state_attributes = ["employeeType"]
     # proper username and password in allowed group
     authorized = await authenticator.get_authenticated_user(
         None, {"username": "fry", "password": "fry"}

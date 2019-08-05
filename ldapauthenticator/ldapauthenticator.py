@@ -214,7 +214,7 @@ class LDAPAuthenticator(Authenticator):
 
     attributes = List(config=True, help="List of attributes to be searched")
 
-    user_info_attributes = List(
+    auth_state_attributes = List(
         config=True, help="List of attributes to be returned in auth_state for a user"
     )
 
@@ -293,9 +293,9 @@ class LDAPAuthenticator(Authenticator):
 
     def get_user_attributes(self, conn, userdn):
         attrs = {}
-        if self.user_info_attributes:
+        if self.auth_state_attributes:
             found = conn.search(
-                userdn, "(objectClass=*)", attributes=self.user_info_attributes
+                userdn, "(objectClass=*)", attributes=self.auth_state_attributes
             )
             if found:
                 attrs = conn.entries[0].entry_attributes_as_dict
