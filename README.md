@@ -198,6 +198,7 @@ c.LDAPAuthenticator.user_search_base = 'ou=people,dc=wikimedia,dc=org'
 c.LDAPAuthenticator.user_attribute = 'sAMAccountName'
 c.LDAPAuthenticator.lookup_dn_user_dn_attribute = 'cn'
 c.LDAPAuthenticator.escape_userdn = False
+c.LDAPAuthenticator.bind_dn_template = '{username}'
 ```
 
 In setup above, first LDAP will be searched (with account ldap_search_user_technical_account) for users that have sAMAccountName=login
