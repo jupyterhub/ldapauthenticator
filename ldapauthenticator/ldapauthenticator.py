@@ -214,6 +214,10 @@ class LDAPAuthenticator(Authenticator):
 
     attributes = List(config=True, help="List of attributes to be searched")
 
+    auth_state_attributes = List(
+        config=True, help="List of attributes to be returned in auth_state for a user"
+    )
+
     use_lookup_dn_username = Bool(
         True,
         config=True,
@@ -286,6 +290,16 @@ class LDAPAuthenticator(Authenticator):
             server, user=userdn, password=password, auto_bind=auto_bind
         )
         return conn
+
+    def get_user_attributes(self, conn, userdn):
+        attrs = {}
+        if self.auth_state_attributes:
+            found = conn.search(
+                userdn, "(objectClass=*)", attributes=self.auth_state_attributes
+            )
+            if found:
+                attrs = conn.entries[0].entry_attributes_as_dict
+        return attrs
 
     @gen.coroutine
     def authenticate(self, handler, data):
@@ -410,10 +424,14 @@ class LDAPAuthenticator(Authenticator):
                 self.log.warning(msg.format(username=username))
                 return None
 
-        if self.use_lookup_dn_username:
-            return username
-        else:
-            return data["username"]
+        if not self.use_lookup_dn_username:
+            username = data["username"]
+
+        user_info = self.get_user_attributes(conn, userdn)
+        if user_info:
+            self.log.debug("username:%s attributes:%s", username, user_info)
+            return {"name": username, "auth_state": user_info}
+        return username
 
 
 if __name__ == "__main__":

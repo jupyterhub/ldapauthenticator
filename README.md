@@ -169,6 +169,11 @@ If set to True, escape special chars in userdn when authenticating in LDAP.
 On some LDAP servers, when userdn contains chars like '(', ')', '\' authentication may fail when those chars
 are not escaped.
 
+#### `LDAPAuthenticator.auth_state_attributes` ####
+
+An optional list of attributes to be fetched for a user after login.
+If found these will be returned as `auth_state`.
+
 #### `LDAPAuthenticator.use_lookup_dn_username` ####
 
 If set to True (the default) the username used to build the DN string is returned as the username when `lookup_dn` is True.
