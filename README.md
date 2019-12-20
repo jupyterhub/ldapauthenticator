@@ -1,5 +1,7 @@
 # ldapauthenticator
 
+[![Build Status](https://travis-ci.com/jupyterhub/ldapauthenticator.svg?branch=master)](https://travis-ci.com/jupyterhub/ldapauthenticator)
+
 Simple LDAP Authenticator Plugin for JupyterHub
 
 ## Installation ##
@@ -11,7 +13,7 @@ pip install jupyterhub-ldapauthenticator
 ```
 ...or using conda with:
 ```
-conda install -c conda-forge jupyterhub-ldapauthenticator 
+conda install -c conda-forge jupyterhub-ldapauthenticator
 ```
 
 
@@ -167,6 +169,17 @@ If set to True, escape special chars in userdn when authenticating in LDAP.
 On some LDAP servers, when userdn contains chars like '(', ')', '\' authentication may fail when those chars
 are not escaped.
 
+#### `LDAPAuthenticator.auth_state_attributes` ####
+
+An optional list of attributes to be fetched for a user after login.
+If found these will be returned as `auth_state`.
+
+#### `LDAPAuthenticator.use_lookup_dn_username` ####
+
+If set to True (the default) the username used to build the DN string is returned as the username when `lookup_dn` is True.
+
+When authenticating on a Linux machine against an AD server this might return something different from the supplied UNIX username. In this case setting this option to False might be a solution.
+
 ## Compatibility ##
 
 This has been tested against an OpenLDAP server, with the client
@@ -213,4 +226,3 @@ JupyterHub create local accounts using the LDAPAuthenticator.
 
 Issue [#19](https://github.com/jupyterhub/ldapauthenticator/issues/19) provides
 additional discussion on local user creation.
-
