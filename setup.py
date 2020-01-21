@@ -12,6 +12,8 @@ setup(
     name="jupyterhub-ldapauthenticator",
     version=version,
     description="LDAP Authenticator for JupyterHub",
+    long_description=open("README.md").read(),
+    long_description_content_type="text/markdown",
     url="https://github.com/jupyterhub/ldapauthenticator",
     author="Yuvi Panda",
     author_email="yuvipanda@riseup.net",
