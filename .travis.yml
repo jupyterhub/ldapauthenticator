@@ -3,9 +3,6 @@ language: python
 sudo: false
 cache:
   - pip
-python:
-  - 3.7
-  - 3.6
 env:
   global:
     - ASYNC_TEST_TIMEOUT=15
@@ -52,8 +49,28 @@ after_failure:
       echo "or after-the-fact on already committed files with"
       echo "    pre-commit run --all-files"
     fi
-matrix:
+
+jobs:
+  allow_failures:
+    - python: nightly
   fast_finish: true
   include:
+    # Default stage: test
     - python: 3.6
       env: TEST=lint
+    - python: 3.7
+    - python: 3.6
+    - python: nightly
+    # Only deploy if all test jobs passed
+    - stage: deploy
+      python: 3.7
+      if: tag IS present
+      deploy:
+        provider: pypi
+        user: __token__
+        # password: see secret PYPI_PASSWORD variable
+        distributions: sdist bdist_wheel
+        on:
+          # Without this we get the note about:
+          # Skipping a deployment with the pypi provider because this branch is not permitted: <tag>
+          tags: true
