@@ -1,14 +1,13 @@
 # How to make a release
 
-`oauthenticator` is a package [available on
-PyPI](https://pypi.org/project/oauthenticator/) and
-[conda-forge](https://conda-forge.org/). These are instructions on how to make a
-release on PyPI. The PyPI release is done automatically by TravisCI when a tag
-is pushed.
+`ldapauthenticator` is a package [available on PyPI](https://pypi.org/project/jupyterhub-ldapauthenticator/) and
+[conda-forge](https://anaconda.org/conda-forge/jupyterhub-ldapauthenticator).
+These are instructions on how to make a release on PyPI.
+The PyPI release is done automatically by TravisCI when a tag is pushed.
 
 For you to follow along according to these instructions, you need:
-- To have push rights to the [oauthenticator GitHub
-  repository](https://github.com/jupyterhub/oauthenticator).
+- To have push rights to the [ldapauthenticator GitHub
+  repository](https://github.com/jupyterhub/ldapauthenticator).
 
 ## Steps to make a release
 
@@ -23,25 +22,20 @@ For you to follow along according to these instructions, you need:
    git clean -xfd
    ```
 
-1. Update [CHANGELOG.md](CHANGELOG.md). Doing this can be made easier with the
-   help of the
-   [choldgraf/github-activity](https://github.com/choldgraf/github-activity)
-   utility.
-
-1. Set the `version_info` variable in [_version.py](oauthenticator/_version.py)
+1. Set the `version` variable in [setup.py](setup.py)
    appropriately and make a commit.
 
    ```
-   git add oauthenticator/_version.py
+   git add setup.py
    VERSION=...  # e.g. 1.2.3
    git commit -m "release $VERSION"
    ```
 
-1. Reset the `version_info` variable in
-   [_version.py](oauthenticator/_version.py) appropriately with an incremented
+1. Reset the `version` variable in
+   [setup.py](setup.py) appropriately with an incremented
    patch version and a `dev` element, then make a commit.
    ```
-   git add oauthenticator/_version.py
+   git add setup.py
    git commit -m "back to dev"
    ```
 
@@ -69,6 +63,6 @@ For you to follow along according to these instructions, you need:
    ```
 
 1. Following the release to PyPI, an automated PR should arrive to
-   [conda-forge/oauthenticator-feedstock](https://github.com/conda-forge/oauthenticator-feedstock),
+   [conda-forge/ldapauthenticator-feedstock](https://github.com/conda-forge/jupyterhub-ldapauthenticator-feedstock),
    check for the tests to succeed on this PR and then merge it to successfully
    update the package for `conda` on the conda-forge channel.
