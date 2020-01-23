@@ -357,7 +357,7 @@ class LDAPAuthenticator(Authenticator):
                     exc_msg=exc.args[0] if exc.args else "",
                 )
             else:
-                is_bound = conn.bind()
+                is_bound = True if conn.bound else conn.bind()
             msg = msg.format(username=username, userdn=userdn, is_bound=is_bound)
             self.log.debug(msg)
             if is_bound:
