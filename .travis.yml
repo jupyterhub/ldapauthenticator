@@ -1,10 +1,9 @@
-dist: xenial
+dist: bionic
 language: python
 cache:
   - pip
 env:
   global:
-    - ASYNC_TEST_TIMEOUT=15
     - LDAP_HOST=127.0.0.1
 services:
   - docker
@@ -40,9 +39,7 @@ after_failure:
   - |
     # point to auto-lint-fix
     if [[ "$TEST" == "lint" ]]; then
-      echo "You can install pre-commit hooks to automatically run formatting"
-      echo "on each commit with:"
-      echo "    pre-commit install"
+      echo "You can install pre-commit hooks to automatically run forma- python: nightly
       echo "or you can run by hand on staged files with"
       echo "    pre-commit run"
       echo "or after-the-fact on already committed files with"
@@ -57,8 +54,9 @@ jobs:
     # Default stage: test
     - python: 3.6
       env: TEST=lint
-    - python: 3.7
     - python: 3.6
+    - python: 3.7
+    - python: 3.8
     - python: nightly
     # Only deploy if all test jobs passed
     - stage: deploy
