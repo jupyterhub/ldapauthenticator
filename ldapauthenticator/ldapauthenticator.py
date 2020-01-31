@@ -278,7 +278,29 @@ class LDAPAuthenticator(Authenticator):
                 )
             )
             return None
-        return conn.response[0]["attributes"][self.lookup_dn_user_dn_attribute]
+
+        user_dn = response[0]['attributes'][self.lookup_dn_user_dn_attribute]
+        if isinstance(user_dn, list):
+            if len(user_dn) == 0:
+                return None
+            elif len(user_dn) == 1:
+                user_dn = user_dn[0]
+            else:
+                msg = (
+                    "A lookup of the username '{username}' returned a list "
+                    "of entries for the attribute '{attribute}'. Only the "
+                    "first among these ('{first_entry}') was used. The other "
+                    "entries ({other_entries}) were ignored."
+                )
+                self.log.warn(msg.format(
+                    username=username_supplied_by_user,
+                    attribute=self.lookup_dn_user_dn_attribute,
+                    first_entry=user_dn[0],
+                    other_entries=", ".join(user_dn[1:]),
+                ))
+                user_dn = user_dn[0]
+
+        return user_dn
 
     def get_connection(self, userdn, password):
         server = ldap3.Server(
@@ -325,8 +347,6 @@ class LDAPAuthenticator(Authenticator):
             username = self.resolve_username(username)
             if not username:
                 return None
-            if isinstance(username, list):
-                username = username[0]
 
         if self.lookup_dn:
             if str(self.lookup_dn_user_dn_attribute).upper() == "CN":
