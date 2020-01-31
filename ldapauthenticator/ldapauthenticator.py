@@ -137,6 +137,7 @@ class LDAPAuthenticator(Authenticator):
         c.LDAPAuthenticator.user_search_base = 'ou=people,dc=wikimedia,dc=org'
         c.LDAPAuthenticator.user_attribute = 'sAMAccountName'
         c.LDAPAuthenticator.lookup_dn_user_dn_attribute = 'cn'
+        c.LDAPAuthenticator.bind_dn_template = '{username}'
         ```
         """,
     )
@@ -214,6 +215,10 @@ class LDAPAuthenticator(Authenticator):
 
     attributes = List(config=True, help="List of attributes to be searched")
 
+    auth_state_attributes = List(
+        config=True, help="List of attributes to be returned in auth_state for a user"
+    )
+
     use_lookup_dn_username = Bool(
         True,
         config=True,
@@ -235,7 +240,7 @@ class LDAPAuthenticator(Authenticator):
         if not is_bound:
             msg = "Failed to connect to LDAP server with search user '{search_dn}'"
             self.log.warning(msg.format(search_dn=search_dn))
-            return None, None
+            return (None, None)
 
         search_filter = self.lookup_dn_search_filter.format(
             login_attr=self.user_attribute, login=username_supplied_by_user
@@ -272,13 +277,30 @@ class LDAPAuthenticator(Authenticator):
                     username=username_supplied_by_user, attribute=self.user_attribute
                 )
             )
-            return None, None
+            return (None, None)
 
-        ret = (
-            conn.response[0]["attributes"][self.lookup_dn_user_dn_attribute],
-            conn.response[0]["dn"],
-        )
-        return ret
+        user_dn = response[0]['attributes'][self.lookup_dn_user_dn_attribute]
+        if isinstance(user_dn, list):
+            if len(user_dn) == 0:
+                return (None, None)
+            elif len(user_dn) == 1:
+                user_dn = user_dn[0]
+            else:
+                msg = (
+                    "A lookup of the username '{username}' returned a list "
+                    "of entries for the attribute '{attribute}'. Only the "
+                    "first among these ('{first_entry}') was used. The other "
+                    "entries ({other_entries}) were ignored."
+                )
+                self.log.warn(msg.format(
+                    username=username_supplied_by_user,
+                    attribute=self.lookup_dn_user_dn_attribute,
+                    first_entry=user_dn[0],
+                    other_entries=", ".join(user_dn[1:]),
+                ))
+                user_dn = user_dn[0]
+
+        return (user_dn, response[0]["dn"])
 
     def get_connection(self, userdn, password):
         server = ldap3.Server(
@@ -291,6 +313,16 @@ class LDAPAuthenticator(Authenticator):
             server, user=userdn, password=password, auto_bind=auto_bind
         )
         return conn
+
+    def get_user_attributes(self, conn, userdn):
+        attrs = {}
+        if self.auth_state_attributes:
+            found = conn.search(
+                userdn, "(objectClass=*)", attributes=self.auth_state_attributes
+            )
+            if found:
+                attrs = conn.entries[0].entry_attributes_as_dict
+        return attrs
 
     @gen.coroutine
     def authenticate(self, handler, data):
@@ -315,8 +347,6 @@ class LDAPAuthenticator(Authenticator):
             username, resolved_dn = self.resolve_username(username)
             if not username:
                 return None
-            if isinstance(username, list):
-                username = username[0]
 
         if self.lookup_dn:
             if str(self.lookup_dn_user_dn_attribute).upper() == "CN":
@@ -350,7 +380,7 @@ class LDAPAuthenticator(Authenticator):
                     exc_msg=exc.args[0] if exc.args else "",
                 )
             else:
-                is_bound = conn.bind()
+                is_bound = True if conn.bound else conn.bind()
             msg = msg.format(username=username, userdn=userdn, is_bound=is_bound)
             self.log.debug(msg)
             if is_bound:
@@ -417,10 +447,14 @@ class LDAPAuthenticator(Authenticator):
                 self.log.warning(msg.format(username=username))
                 return None
 
-        if self.use_lookup_dn_username:
-            return username
-        else:
-            return data["username"]
+        if not self.use_lookup_dn_username:
+            username = data["username"]
+
+        user_info = self.get_user_attributes(conn, userdn)
+        if user_info:
+            self.log.debug("username:%s attributes:%s", username, user_info)
+            return {"name": username, "auth_state": user_info}
+        return username
 
 
 if __name__ == "__main__":

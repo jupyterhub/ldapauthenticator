@@ -1,6 +1,11 @@
 # ldapauthenticator
 
-[![Build Status](https://travis-ci.com/jupyterhub/ldapauthenticator.svg?branch=master)](https://travis-ci.com/jupyterhub/ldapauthenticator)
+[![TravisCI (.com) build status](https://img.shields.io/travis/com/jupyterhub/ldapauthenticator/master?logo=travis)](https://travis-ci.com/jupyterhub/ldapauthenticator)
+[![Latest PyPI version](https://img.shields.io/pypi/v/jupyterhub-ldapauthenticator?logo=pypi)](https://pypi.python.org/pypi/jupyterhub-ldapauthenticator)
+[![Latest conda-forge version](https://img.shields.io/conda/vn/conda-forge/jupyterhub-ldapauthenticator?logo=conda-forge)](https://anaconda.org/conda-forge/jupyterhub-ldapauthenticator)
+[![GitHub](https://img.shields.io/badge/issue_tracking-github-blue?logo=github)](https://github.com/jupyterhub/ldapauthenticator/issues)
+[![Discourse](https://img.shields.io/badge/help_forum-discourse-blue?logo=discourse)](https://discourse.jupyter.org/c/jupyterhub)
+[![Gitter](https://img.shields.io/badge/social_chat-gitter-blue?logo=gitter)](https://gitter.im/jupyterhub/jupyterhub)
 
 Simple LDAP Authenticator Plugin for JupyterHub
 
@@ -53,8 +58,14 @@ without a port name or protocol prefix.
 #### `LDAPAuthenticator.bind_dn_template` ####
 
 Template used to generate the full dn for a user from the human readable
-username. This must be set to either empty `[]` or to a list of templates the
-users belong to. For example, if some of the users in your LDAP database have DN
+username.
+
+If this is left unconfigured with `lookup_dn = True`, a dynamically provided
+default value from looking up the username will be provided. If
+`lookup_dn = False`, `bind_dn_template` needs to be a non-empty list of templates
+the users belong to.
+
+For example, if some of the users in your LDAP database have DN
 of the form `uid=Yuvipanda,ou=people,dc=wikimedia,dc=org` and some other users
 have DN like `uid=Mike,ou=developers,dc=wikimedia,dc=org` where Yuvipanda and
 Mike are the usernames, you would set this config item to be:
@@ -72,7 +83,10 @@ uses [traitlets](https://traitlets.readthedocs.io) for configuration, and the
 
 The `{username}` is expanded into the username the user provides.
 
-If `lookup_dn` is True this setting may be empty and the DN from resolving the username will be used
+If you are using the `lookup_dn = True` configuration option, the `{username}` is
+expanded to the full path to the LDAP object returned by the LDAP lookup. For example,
+on an Active Directory system `{username}` might expand to something like
+`CN=First M. Last,OU=An Example Organizational Unit,DC=EXAMPLE,DC=COM`.
 
 ### Optional configuration ###
 
@@ -170,6 +184,11 @@ If set to True, escape special chars in userdn when authenticating in LDAP.
 On some LDAP servers, when userdn contains chars like '(', ')', '\' authentication may fail when those chars
 are not escaped.
 
+#### `LDAPAuthenticator.auth_state_attributes` ####
+
+An optional list of attributes to be fetched for a user after login.
+If found these will be returned as `auth_state`.
+
 #### `LDAPAuthenticator.use_lookup_dn_username` ####
 
 If set to True (the default) the username used to build the DN string is returned as the username when `lookup_dn` is True.
@@ -199,6 +218,7 @@ c.LDAPAuthenticator.user_search_base = 'ou=people,dc=wikimedia,dc=org'
 c.LDAPAuthenticator.user_attribute = 'sAMAccountName'
 c.LDAPAuthenticator.lookup_dn_user_dn_attribute = 'cn'
 c.LDAPAuthenticator.escape_userdn = False
+c.LDAPAuthenticator.bind_dn_template = '{username}'
 ```
 
 In setup above, first LDAP will be searched (with account ldap_search_user_technical_account) for users that have sAMAccountName=login
