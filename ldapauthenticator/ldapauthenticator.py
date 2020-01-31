@@ -137,6 +137,7 @@ class LDAPAuthenticator(Authenticator):
         c.LDAPAuthenticator.user_search_base = 'ou=people,dc=wikimedia,dc=org'
         c.LDAPAuthenticator.user_attribute = 'sAMAccountName'
         c.LDAPAuthenticator.lookup_dn_user_dn_attribute = 'cn'
+        c.LDAPAuthenticator.bind_dn_template = '{username}'
         ```
         """,
     )

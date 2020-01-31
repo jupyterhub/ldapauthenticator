@@ -58,7 +58,7 @@ without a port name or protocol prefix.
 #### `LDAPAuthenticator.bind_dn_template` ####
 
 Template used to generate the full dn for a user from the human readable
-username. This must be set to either empty `[]` or to a list of templates the
+username. This must be set to a non-empty list of templates the
 users belong to. For example, if some of the users in your LDAP database have DN
 of the form `uid=Yuvipanda,ou=people,dc=wikimedia,dc=org` and some other users
 have DN like `uid=Mike,ou=developers,dc=wikimedia,dc=org` where Yuvipanda and
@@ -77,6 +77,14 @@ uses [traitlets](https://traitlets.readthedocs.io) for configuration, and the
 
 The `{username}` is expanded into the username the user provides.
 
+If you are using the `lookup_dn = True` configuration option, the `{username}` is
+expanded to the full path to the LDAP object returned by the LDAP lookup. For example,
+on an Active Directory system `{username}` might expand to something like
+`CN=First M. Last,OU=An Example Organizational Unit,DC=EXAMPLE,DC=COM`.
+
+You must configure this setting explicitly. If you leave this setting
+configured with the default value (`[]`), the LDAP bind/lookup **will not** be
+performed and authentication will fail.
 
 ### Optional configuration ###
 
@@ -208,6 +216,7 @@ c.LDAPAuthenticator.user_search_base = 'ou=people,dc=wikimedia,dc=org'
 c.LDAPAuthenticator.user_attribute = 'sAMAccountName'
 c.LDAPAuthenticator.lookup_dn_user_dn_attribute = 'cn'
 c.LDAPAuthenticator.escape_userdn = False
+c.LDAPAuthenticator.bind_dn_template = '{username}'
 ```
 
 In setup above, first LDAP will be searched (with account ldap_search_user_technical_account) for users that have sAMAccountName=login
