@@ -1,0 +1,75 @@
+dist: xenial
+language: python
+cache:
+  - pip
+env:
+  global:
+    - ASYNC_TEST_TIMEOUT=15
+    - LDAP_HOST=127.0.0.1
+services:
+  - docker
+
+# installing dependencies
+before_install:
+  - set -e
+install:
+  - pip install --upgrade pip
+  - pip install --upgrade --pre -r dev-requirements.txt .
+  - pip freeze
+  - |
+    # start LDAP server
+    if [[ -z "$TEST" ]]; then
+      ci/docker-ldap.sh
+    fi
+
+# running tests
+script:
+  - |
+    # run tests
+    if [[ -z "$TEST" ]]; then
+      pytest -v --maxfail=2 --cov=ldapauthenticator ldapauthenticator/tests
+    fi
+  - |
+    # run autoformat
+    if [[ "$TEST" == "lint" ]]; then
+      pre-commit run --all-files
+    fi
+after_success:
+  - codecov
+after_failure:
+  - |
+    # point to auto-lint-fix
+    if [[ "$TEST" == "lint" ]]; then
+      echo "You can install pre-commit hooks to automatically run formatting"
+      echo "on each commit with:"
+      echo "    pre-commit install"
+      echo "or you can run by hand on staged files with"
+      echo "    pre-commit run"
+      echo "or after-the-fact on already committed files with"
+      echo "    pre-commit run --all-files"
+    fi
+
+jobs:
+  allow_failures:
+    - python: nightly
+  fast_finish: true
+  include:
+    # Default stage: test
+    - python: 3.6
+      env: TEST=lint
+    - python: 3.7
+    - python: 3.6
+    - python: nightly
+    # Only deploy if all test jobs passed
+    - stage: deploy
+      python: 3.7
+      if: tag IS present
+      deploy:
+        provider: pypi
+        user: __token__
+        # password: see secret PYPI_PASSWORD variable
+        distributions: sdist bdist_wheel
+        on:
+          # Without this we get the note about:
+          # Skipping a deployment with the pypi provider because this branch is not permitted: <tag>
+          tags: true
