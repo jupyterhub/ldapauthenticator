@@ -60,15 +60,15 @@ without a port name or protocol prefix.
 Template used to generate the full dn for a user from the human readable
 username.
 
-If this is left unconfigured with `lookup_dn = True`, a dynamically provided
-default value from looking up the username will be provided. If
-`lookup_dn = False`, `bind_dn_template` needs to be a non-empty list of templates
-the users belong to.
+If `bind_dn_template` isn't explicitly configured and `lookup_dn = True`, a
+dynamically acquired value from the username lookup will be used instead.
 
-For example, if some of the users in your LDAP database have DN
-of the form `uid=Yuvipanda,ou=people,dc=wikimedia,dc=org` and some other users
-have DN like `uid=Mike,ou=developers,dc=wikimedia,dc=org` where Yuvipanda and
-Mike are the usernames, you would set this config item to be:
+If `lookup_dn = False`, then `bind_dn_template` is required to be a non-empty
+list of templates the users belong to. For example, if some of the users in your
+LDAP database have DN of the form `uid=Yuvipanda,ou=people,dc=wikimedia,dc=org`
+and some other users have DN like `uid=Mike,ou=developers,dc=wikimedia,dc=org`
+where Yuvipanda and Mike are the usernames, you would set this config item to
+be:
 
 ```python
 c.LDAPAuthenticator.bind_dn_template = [
