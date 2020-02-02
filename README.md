@@ -55,20 +55,20 @@ Address of the LDAP Server to contact. Just use a bare hostname or IP,
 without a port name or protocol prefix.
 
 
-#### `LDAPAuthenticator.bind_dn_template` ####
+#### `LDAPAuthenticator.lookup_dn` or `LDAPAuthenticator.bind_dn_template` ####
 
-Template used to generate the full dn for a user from the human readable
-username.
+`bind_dn_template` is a template used to generate the full DN for a user from
+the human readable username.
 
-If `bind_dn_template` isn't explicitly configured and `lookup_dn = True`, a
-dynamically acquired value from the username lookup will be used instead.
+If `bind_dn_template` isn't explicitly configured and `lookup_dn=True`, a
+dynamically acquired value from a username lookup will be used instead.
 
-If `lookup_dn = False`, then `bind_dn_template` is required to be a non-empty
+If `lookup_dn=False`, then `bind_dn_template` is required to be a non-empty
 list of templates the users belong to. For example, if some of the users in your
 LDAP database have DN of the form `uid=Yuvipanda,ou=people,dc=wikimedia,dc=org`
 and some other users have DN like `uid=Mike,ou=developers,dc=wikimedia,dc=org`
-where Yuvipanda and Mike are the usernames, you would set this config item to
-be:
+where `Yuvipanda` and `Mike` are the usernames, you would set this config item
+to be:
 
 ```python
 c.LDAPAuthenticator.bind_dn_template = [

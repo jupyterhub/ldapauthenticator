@@ -343,22 +343,20 @@ class LDAPAuthenticator(Authenticator):
             self.log.warning("username:%s Login denied for blank password", username)
             return None
 
+        bind_dn_template = self.bind_dn_template
+        if isinstance(bind_dn_template, str):
+            # bind_dn_template should be of type List[str]
+            bind_dn_template = [bind_dn_template]
+
         if self.lookup_dn:
             username, resolved_dn = self.resolve_username(username)
             if not username:
                 return None
-
-        if self.lookup_dn:
             if str(self.lookup_dn_user_dn_attribute).upper() == "CN":
                 # Only escape commas if the lookup attribute is CN
                 username = re.subn(r"([^\\]),", r"\1\,", username)[0]
-
-        bind_dn_template = self.bind_dn_template
-        if not bind_dn_template and self.lookup_dn:
-            bind_dn_template = [resolved_dn]
-        if isinstance(bind_dn_template, str):
-            # bind_dn_template should be of type List[str]
-            bind_dn_template = [bind_dn_template]
+            if not bind_dn_template:
+                bind_dn_template = [resolved_dn]
 
         is_bound = False
         for dn in bind_dn_template:
