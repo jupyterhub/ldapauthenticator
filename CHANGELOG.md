@@ -5,7 +5,7 @@
 ## [1.3]
 
 
-### [1.3.0] - NOT YET RELEASED
+### [1.3.0] - 2020-02-09
 
 #### Fixes
 * Avoid binding the connection twice [#142](https://github.com/jupyterhub/ldapauthenticator/pull/142) ([@m2hofi94](https://github.com/m2hofi94))
