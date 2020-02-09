@@ -240,7 +240,7 @@ class LDAPAuthenticator(Authenticator):
         if not is_bound:
             msg = "Failed to connect to LDAP server with search user '{search_dn}'"
             self.log.warning(msg.format(search_dn=search_dn))
-            return None
+            return (None, None)
 
         search_filter = self.lookup_dn_search_filter.format(
             login_attr=self.user_attribute, login=username_supplied_by_user
@@ -277,12 +277,12 @@ class LDAPAuthenticator(Authenticator):
                     username=username_supplied_by_user, attribute=self.user_attribute
                 )
             )
-            return None
+            return (None, None)
 
         user_dn = response[0]["attributes"][self.lookup_dn_user_dn_attribute]
         if isinstance(user_dn, list):
             if len(user_dn) == 0:
-                return None
+                return (None, None)
             elif len(user_dn) == 1:
                 user_dn = user_dn[0]
             else:
@@ -302,7 +302,7 @@ class LDAPAuthenticator(Authenticator):
                 )
                 user_dn = user_dn[0]
 
-        return user_dn
+        return (user_dn, response[0]["dn"])
 
     def get_connection(self, userdn, password):
         server = ldap3.Server(
@@ -345,20 +345,27 @@ class LDAPAuthenticator(Authenticator):
             self.log.warning("username:%s Login denied for blank password", username)
             return None
 
-        if self.lookup_dn:
-            username = self.resolve_username(username)
-            if not username:
-                return None
+        # bind_dn_template should be of type List[str]
+        bind_dn_template = self.bind_dn_template
+        if isinstance(bind_dn_template, str):
+            bind_dn_template = [bind_dn_template]
+
+        # sanity check
+        if not self.lookup_dn and not bind_dn_template:
+            self.log.warning(
+                "Login not allowed, please configure 'lookup_dn' or 'bind_dn_template'."
+            )
+            return None
 
         if self.lookup_dn:
+            username, resolved_dn = self.resolve_username(username)
+            if not username:
+                return None
             if str(self.lookup_dn_user_dn_attribute).upper() == "CN":
                 # Only escape commas if the lookup attribute is CN
                 username = re.subn(r"([^\\]),", r"\1\,", username)[0]
-
-        bind_dn_template = self.bind_dn_template
-        if isinstance(bind_dn_template, str):
-            # bind_dn_template should be of type List[str]
-            bind_dn_template = [bind_dn_template]
+            if not bind_dn_template:
+                bind_dn_template = [resolved_dn]
 
         is_bound = False
         for dn in bind_dn_template:

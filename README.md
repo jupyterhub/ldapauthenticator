@@ -55,14 +55,24 @@ Address of the LDAP Server to contact. Just use a bare hostname or IP,
 without a port name or protocol prefix.
 
 
-#### `LDAPAuthenticator.bind_dn_template` ####
+#### `LDAPAuthenticator.lookup_dn` or `LDAPAuthenticator.bind_dn_template` ####
 
-Template used to generate the full dn for a user from the human readable
-username. This must be set to a non-empty list of templates the
-users belong to. For example, if some of the users in your LDAP database have DN
-of the form `uid=Yuvipanda,ou=people,dc=wikimedia,dc=org` and some other users
-have DN like `uid=Mike,ou=developers,dc=wikimedia,dc=org` where Yuvipanda and
-Mike are the usernames, you would set this config item to be:
+To authenticate a user we need the corresponding DN to bind against the LDAP server. The DN can be acquired by either:
+
+1. setting `bind_dn_template`, which is a list of string template used to
+   generate the full DN for a user from the human readable username, or
+2. setting `lookup_dn` to `True`, which does a reverse lookup to obtain the
+   user's DN. This is because ome LDAP servers, such as Active Directory, don't
+   always bind with the true DN.
+
+##### `lookup_dn = False` #####
+
+If `lookup_dn = False`, then `bind_dn_template` is required to be a non-empty
+list of templates the users belong to. For example, if some of the users in your
+LDAP database have DN of the form `uid=Yuvipanda,ou=people,dc=wikimedia,dc=org`
+and some other users have DN like `uid=Mike,ou=developers,dc=wikimedia,dc=org`
+where `Yuvipanda` and `Mike` are the usernames, you would set this config item
+to be:
 
 ```python
 c.LDAPAuthenticator.bind_dn_template = [
@@ -77,14 +87,25 @@ uses [traitlets](https://traitlets.readthedocs.io) for configuration, and the
 
 The `{username}` is expanded into the username the user provides.
 
-If you are using the `lookup_dn = True` configuration option, the `{username}` is
-expanded to the full path to the LDAP object returned by the LDAP lookup. For example,
-on an Active Directory system `{username}` might expand to something like
-`CN=First M. Last,OU=An Example Organizational Unit,DC=EXAMPLE,DC=COM`.
+##### `lookup_dn = True` #####
 
-You must configure this setting explicitly. If you leave this setting
-configured with the default value (`[]`), the LDAP bind/lookup **will not** be
-performed and authentication will fail.
+```python
+c.LDAPAuthenticator.lookup_dn = True
+```
+
+If `bind_dn_template` isn't explicitly configured, i.e. the empty list, the
+dynamically acquired value for DN from the username lookup will be used
+instead. If `bind_dn_template` is configured it will be used just like in the
+`lookup_dn = False` case.
+
+The `{username}` is expanded to the full path to the LDAP object returned by the
+LDAP lookup. For example, on an Active Directory system `{username}` might
+expand to something like `CN=First M. Last,OU=An Example Organizational
+Unit,DC=EXAMPLE,DC=COM`.
+
+Also, when using `lookup_dn = True` the options `user_search_base`,
+`user_attribute`, `lookup_dn_user_dn_attribute` and `lookup_dn_search_filter`
+are required, although their defaults might be sufficient for your use case.
 
 ### Optional configuration ###
 
@@ -125,16 +146,6 @@ Set this to be `True` to start SSL connection.
 
 Port to use to contact the LDAP server. Defaults to 389 if no SSL
 is being used, and 636 is SSL is being used.
-
-#### `LDAPAuthenticator.lookup_dn` ####
-
-Whether to try a reverse lookup to obtain the user's DN.  Some LDAP servers,
-such as Active Directory, don't always bind with the true DN, so this allows
-us to discover it based on the username.
-
-```python
-c.LDAPAuthenticator.lookup_dn = True
-```
 
 #### `LDAPAuthenticator.user_search_base` ####
 
