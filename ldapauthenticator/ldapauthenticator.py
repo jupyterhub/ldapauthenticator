@@ -279,7 +279,7 @@ class LDAPAuthenticator(Authenticator):
             )
             return (None, None)
 
-        user_dn = response[0]['attributes'][self.lookup_dn_user_dn_attribute]
+        user_dn = response[0]["attributes"][self.lookup_dn_user_dn_attribute]
         if isinstance(user_dn, list):
             if len(user_dn) == 0:
                 return (None, None)
@@ -292,12 +292,14 @@ class LDAPAuthenticator(Authenticator):
                     "first among these ('{first_entry}') was used. The other "
                     "entries ({other_entries}) were ignored."
                 )
-                self.log.warn(msg.format(
-                    username=username_supplied_by_user,
-                    attribute=self.lookup_dn_user_dn_attribute,
-                    first_entry=user_dn[0],
-                    other_entries=", ".join(user_dn[1:]),
-                ))
+                self.log.warn(
+                    msg.format(
+                        username=username_supplied_by_user,
+                        attribute=self.lookup_dn_user_dn_attribute,
+                        first_entry=user_dn[0],
+                        other_entries=", ".join(user_dn[1:]),
+                    )
+                )
                 user_dn = user_dn[0]
 
         return (user_dn, response[0]["dn"])
