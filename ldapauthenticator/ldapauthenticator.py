@@ -345,10 +345,17 @@ class LDAPAuthenticator(Authenticator):
             self.log.warning("username:%s Login denied for blank password", username)
             return None
 
+        # bind_dn_template should be of type List[str]
         bind_dn_template = self.bind_dn_template
         if isinstance(bind_dn_template, str):
-            # bind_dn_template should be of type List[str]
             bind_dn_template = [bind_dn_template]
+
+        # sanity check
+        if not self.lookup_dn and not bind_dn_template:
+            self.log.warning(
+                "Login not allowed, please configure 'lookup_dn' or 'bind_dn_template'."
+            )
+            return None
 
         if self.lookup_dn:
             username, resolved_dn = self.resolve_username(username)
