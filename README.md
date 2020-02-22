@@ -251,3 +251,9 @@ JupyterHub create local accounts using the LDAPAuthenticator.
 
 Issue [#19](https://github.com/jupyterhub/ldapauthenticator/issues/19) provides
 additional discussion on local user creation.
+
+
+## Advance configuration and development
+
+LDAP is a notoriously complex topic.
+https://www.zytrax.com/books/ldap/ is a helpful guide for anyone wanting to learn more about LDAP.
