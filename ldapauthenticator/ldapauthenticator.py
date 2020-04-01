@@ -228,6 +228,16 @@ class LDAPAuthenticator(Authenticator):
         This can be useful in an heterogeneous environment, when supplying a UNIX username to authenticate against AD.
         """,
     )
+    
+    def normalize_username(self, username):
+        """Normalize the given username and return it
+        Override in subclasses if usernames need different normalization rules.
+        The default attempts to lowercase the username and apply `username_map` if it is
+        set.
+        """
+        username = ''.join([s.capitalize() for s in username.split()])
+        username = self.username_map.get(username, username)
+        return username
 
     def resolve_username(self, username_supplied_by_user):
         search_dn = self.lookup_dn_search_user
