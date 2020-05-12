@@ -3,6 +3,7 @@ import re
 import ldap3
 from jupyterhub.auth import Authenticator
 from ldap3.utils.conv import escape_filter_chars
+from ldap3.utils.log import set_library_log_detail_level, OFF, BASIC, NETWORK, EXTENDED
 from tornado import gen
 from traitlets import Bool
 from traitlets import Int
@@ -10,6 +11,7 @@ from traitlets import List
 from traitlets import Unicode
 from traitlets import Union
 
+set_library_log_detail_level(BASIC)
 
 class LDAPAuthenticator(Authenticator):
     server_address = Unicode(
