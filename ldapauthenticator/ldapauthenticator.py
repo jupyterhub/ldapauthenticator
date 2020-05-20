@@ -477,7 +477,7 @@ class LDAPAuthenticator(Authenticator):
                 return None
             
         if self.allowed_users:
-            if username not in allowed_users:
+            if username not in self.allowed_users:
                 msg = "username:{username} User not in allowed users"
                 self.log.warning(msg.format(username=username))
                 return None
