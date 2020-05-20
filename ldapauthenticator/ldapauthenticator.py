@@ -86,6 +86,18 @@ class LDAPAuthenticator(Authenticator):
         """,
     )
 
+    allowed_users = List(
+        config=True,
+        allow_none=True,
+        default=None,
+        help="""
+        List of usernames which will be allowed to login. 
+        
+        Set to an empty list or None to allow all users that have an LDAP account to log in,
+        subject to group membership checks.
+        """,
+    )    
+    
     # FIXME: Use something other than this? THIS IS LAME, akin to websites restricting things you
     # can use in usernames / passwords to protect from SQL injection!
     valid_username_regex = Unicode(
@@ -461,6 +473,12 @@ class LDAPAuthenticator(Authenticator):
             if not found:
                 # If we reach here, then none of the groups matched
                 msg = "username:{username} User not in any of the allowed groups"
+                self.log.warning(msg.format(username=username))
+                return None
+            
+        if self.allowed_users:
+            if username not in allowed_users:
+                msg = "username:{username} User not in allowed users"
                 self.log.warning(msg.format(username=username))
                 return None
 
