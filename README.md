@@ -127,6 +127,35 @@ c.LDAPAuthenticator.allowed_groups = [
 ]
 ```
 
+#### `LDAPAuthenticator.group_search_filter`
+
+The LDAP group search filter.
+
+The default value is an LDAP OR search that looks like the following:
+
+```
+(|(member={userdn})(uniqueMember={userdn})(memberUid={uid}))
+```
+
+So it basically compares the `userdn` attribute against the `member` attribute,
+then against the `uniqueMember`, and finally checks the `memberUid` against
+the `uid`.
+
+If you modify this value, you probably want to change `group_attributes` too.
+Here is an example that should work with OpenLDAP servers.
+
+```
+(member={userdn})
+```
+
+#### `LDAPAuthenticator.group_attributes`
+
+A list of attributes used when searching for LDAP groups.
+
+By default, it uses `member`, `uniqueMember`, and `memberUid`. Certain
+servers may reject invalid values causing exceptions during
+authentication.
+
 #### `LDAPAuthenticator.valid_username_regex`
 
 All usernames will be checked against this before being sent

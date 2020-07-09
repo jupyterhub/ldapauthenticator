@@ -17,6 +17,10 @@ def authenticator():
     authenticator.escape_userdn = True
     authenticator.attributes = ["uid", "cn", "mail", "ou"]
     authenticator.use_lookup_dn_username = False
+    authenticator.group_filter = (
+        "(|(member={userdn})(uniqueMember={userdn})(memberUid={uid}))"
+    )
+    authenticator.group_attributes = ["member", "uniqueMember", "memberUid"]
 
     authenticator.allowed_groups = [
         "cn=admin_staff,ou=people,dc=planetexpress,dc=com",
