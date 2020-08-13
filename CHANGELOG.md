@@ -4,6 +4,11 @@
 
 ## [1.3]
 
+### [1.3.1] - 2020-08-13
+
+#### Fixes
+* Pin ldap3 version to lower than 2.8 ([#172](https://github.com/jupyterhub/ldapauthenticator/pull/172)) ([@1kastner](https://github.com/1kastner))
+
 
 ### [1.3.0] - 2020-02-09
 
