@@ -4,6 +4,12 @@
 
 ## [1.3]
 
+### [1.3.2] - 2020-08-28
+
+#### Fixes
+*  Exchanging ldap3 constants in if/else ([#175](https://github.com/jupyterhub/ldapauthenticator/pull/175)) ([@1kastner](https://github.com/1kastner))
+
+
 ### [1.3.1] - 2020-08-13
 
 #### Fixes
