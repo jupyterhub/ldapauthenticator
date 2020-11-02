@@ -228,6 +228,14 @@ class LDAPAuthenticator(Authenticator):
         This can be useful in an heterogeneous environment, when supplying a UNIX username to authenticate against AD.
         """,
     )
+    secondary_uri = Unicode(
+        config=True,
+        default="",
+        help="""
+        Comma separated address:port of the LDAP server which can be tried to contact when
+        primary LDAP server is unavailable.
+        """,
+    )
 
     def resolve_username(self, username_supplied_by_user):
         search_dn = self.lookup_dn_search_user
@@ -305,8 +313,31 @@ class LDAPAuthenticator(Authenticator):
         return (user_dn, response[0]["dn"])
 
     def get_connection(self, userdn, password):
+        try:
+            return self._get_real_connection(
+                userdn, password, self.server_address, self.server_port
+            )
+        except (
+            ldap3.core.exceptions.LDAPSocketOpenError,
+            ldap3.core.exceptions.LDAPBindError,
+            ldap3.core.exceptions.LDAPSocketReceiveError,
+        ):
+            for server, port in self._get_secondary_servers():
+                try:
+                    return self._get_real_connection(userdn, password, server, port)
+                except (
+                    ldap3.core.exceptions.LDAPSocketOpenError,
+                    ldap3.core.exceptions.LDAPBindError,
+                    ldap3.core.exceptions.LDAPSocketReceiveError,
+                ):
+                    continue
+            else:
+                # re-raise the last caught error
+                raise
+
+    def _get_real_connection(self, userdn, password, server_address, server_port):
         server = ldap3.Server(
-            self.server_address, port=self.server_port, use_ssl=self.use_ssl
+            server_address, port=server_port, use_ssl=self.use_ssl
         )
         auto_bind = (
             ldap3.AUTO_BIND_NO_TLS if self.use_ssl else ldap3.AUTO_BIND_TLS_BEFORE_BIND
@@ -315,6 +346,24 @@ class LDAPAuthenticator(Authenticator):
             server, user=userdn, password=password, auto_bind=auto_bind
         )
         return conn
+
+    def _get_secondary_servers(self):
+        uri_list = self.secondary_uri.split(",")
+        for uri in uri_list:
+            server_port = uri.strip().split(":")
+            assert len(server_port) <= 2
+            if len(server_port) == 2:
+                try:
+                    port = int(server_port[1])
+                except ValueError:
+                    self.log.warning(
+                        "Invalid port in secondary uri %s, use default" % uri
+                    )
+                    port = self._server_port_default()
+            else:
+                port = self._server_port_default()
+
+            yield (server_port[0], port)
 
     def get_user_attributes(self, conn, userdn):
         attrs = {}
