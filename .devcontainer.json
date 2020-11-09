@@ -1,0 +1,13 @@
+{
+    "dockerComposeFile": "dev.docker-compose.yml",
+    "workspaceFolder": "/workspace",
+    "service": "jh-ldap-dev",
+    // install runtime dependencies + install pre-commit hooks
+    // note: although it is somehow weird to install the software you want to develop
+    //       it installs all runtime dependencies which are maintained in `setup.py`
+    "postCreateCommand": "pip install --editable . && pre-commit install",
+    "extensions": [
+        "ms-azuretools.vscode-docker",
+        "ms-python.python"
+    ]
+}

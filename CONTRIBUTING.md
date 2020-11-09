@@ -50,6 +50,28 @@ To clean up your development LDAP deployment, run:
 docker rm -f ldap
 ```
 
+## Alternative Development Environment Setup
+
+You can use [*Visual Studio Code*](https://code.visualstudio.com/) with the [*remote containers*](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension to develop in docker container:
+
+1. install visual studio code and the remote containers extension
+1. clone the git repository and open the project in visual studio code
+1. open the development container, either do:
+    - click on the green button in the bottom left and choose `reopen in container`
+    - press `Shift + Ctrl + P` and start typing `reopen in container` and choose it
+    - open menu `View` and click on `Command Palette..` and start typing `reopen in container` and choose it
+1. open a new terminal (menu `Terminal` » `New Terminal`) and run all tests with: `pytest -v`
+    - note: all should run successfully
+
+Troubleshooting (note the early development stage of the remote containers extension):
+
+- after you run `reopen in container` use the command palette and choose `remote containers: show log`
+    - sometimes the `postCreateCommand` does not run successfully
+- further information
+    - guide for dev containers: https://code.visualstudio.com/docs/remote/create-dev-container#_use-docker-compose
+    - `.devcontainer.json` reference: https://code.visualstudio.com/docs/remote/devcontainerjson-reference
+    - docker compose file reference: https://docs.docker.com/compose/compose-file/
+
 ## Contributing
 
 JupyterHub has adopted automatic code formatting so you shouldn't
