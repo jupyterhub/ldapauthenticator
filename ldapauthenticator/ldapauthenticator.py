@@ -12,7 +12,7 @@ from traitlets import Union
 
 
 class LDAPAuthenticator(Authenticator):
-    server_address = Unicode(
+    server_address = List(
         config=True,
         help="""
         Address of the LDAP server to contact.
@@ -305,14 +305,15 @@ class LDAPAuthenticator(Authenticator):
         return (user_dn, response[0]["dn"])
 
     def get_connection(self, userdn, password):
-        server = ldap3.Server(
-            self.server_address, port=self.server_port, use_ssl=self.use_ssl
-        )
+        server_pool = ldap3.ServerPool(self.server_address,
+                                       ldap3.ROUND_ROBIN,
+                                       active=True,
+                                       exhaust=True)
         auto_bind = (
-            ldap3.AUTO_BIND_NO_TLS if self.use_ssl else ldap3.AUTO_BIND_TLS_BEFORE_BIND
+            self.use_ssl and ldap3.AUTO_BIND_TLS_BEFORE_BIND or ldap3.AUTO_BIND_NO_TLS
         )
         conn = ldap3.Connection(
-            server, user=userdn, password=password, auto_bind=auto_bind
+            server_pool, user=userdn, password=password, auto_bind=auto_bind
         )
         return conn
 
