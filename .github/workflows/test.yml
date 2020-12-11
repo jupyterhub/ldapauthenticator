@@ -19,8 +19,7 @@ defaults:
     shell: bash
 
 env:
-  OAUTH2_TOKEN_URL: "token_url"
-  OAUTH2_USERDATA_URL: "userdata_url"
+  LDAP_HOST: 127.0.0.1
 
 jobs:
   # Run "linter"
@@ -30,20 +29,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-
       - uses: actions/setup-python@v2
         with:
           python-version: 3.8
-
-      - name: install linter
-        run: |
-          pip install --upgrade pip
-          pip install flake8
-          pip freeze
-
-      - name: run lint check
-        run: |
-          flake8 oauthenticator
+      - uses: pre-commit/action@v2.0.0
 
   # Run tests
   test:
@@ -52,7 +41,7 @@ jobs:
     timeout-minutes: 10
 
     strategy:
-      # Keep running even if one variation of the job fail
+      # Keep running even if one job fails
       fail-fast: false
       matrix:
         python:
@@ -79,18 +68,19 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      - name: Install Python dependencies
+      - name: Install
         run: |
           pip install --upgrade pip
-          pip install --upgrade --pre -r test-requirements.txt .
+          pip install --upgrade --pre -r dev-requirements.txt .
           pip freeze
+          # start LDAP server
+          ci/docker-ldap.sh
 
       - name: Run tests
         # FIXME: --color=yes explicitly set because:
         #        https://github.com/actions/runner/issues/241
-        run: |
-          pytest -v --color=yes --cov=oauthenticator oauthenticator
+        run: pytest -v --color=yes --cov=ldapauthenticator ldapauthenticator/tests
 
+      # https://github.com/marketplace/actions/codecov
       - name: Submit codecov report
-        run: |
-          codecov
+        uses: codecov/codecov-action@v1
