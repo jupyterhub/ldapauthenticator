@@ -72,7 +72,7 @@ class LDAPAuthenticator(Authenticator):
     allowed_groups = List(
         config=True,
         allow_none=True,
-        default=None,
+        default_value=None,
         help="""
         List of LDAP group DNs that users could be members of to be granted access.
 
@@ -118,7 +118,7 @@ class LDAPAuthenticator(Authenticator):
 
     user_search_base = Unicode(
         config=True,
-        default=None,
+        default_value=None,
         allow_none=True,
         help="""
         Base for looking up user accounts in the directory, if `lookup_dn` is set to True.
@@ -144,7 +144,7 @@ class LDAPAuthenticator(Authenticator):
 
     user_attribute = Unicode(
         config=True,
-        default=None,
+        default_value=None,
         allow_none=True,
         help="""
         Attribute containing user's name, if `lookup_dn` is set to True.
