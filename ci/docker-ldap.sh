@@ -6,7 +6,7 @@ set -e
 
 NAME="hub-test-ldap"
 DOCKER_RUN="docker run -d --name $NAME"
-RUN_ARGS="-p 389:389 -p 636:636 rroemhild/test-openldap"
+RUN_ARGS="-p 389:10389 -p 636:10636 rroemhild/test-openldap"
 
 docker rm -f "$NAME" 2>/dev/null || true
 
