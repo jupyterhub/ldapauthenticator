@@ -34,7 +34,4 @@ def authenticator():
         "cn=ship_crew,ou=people,dc=planetexpress,dc=com",
     ]
 
-    # see link below for ldap structure including users:
-    # https://github.com/rroemhild/docker-test-openldap
-
     return authenticator
