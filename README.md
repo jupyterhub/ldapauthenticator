@@ -126,6 +126,22 @@ c.LDAPAuthenticator.allowed_groups = [
 ]
 ```
 
+#### `LDAPAuthenticator.admin_groups` ####
+
+LDAP group whose members are granted admin access. This must be
+set to either empty `[]` (the default) or to a list of full DNs
+that have a `member` attribute that includes the current user
+attempting to log in in order to grant this user admin rights.
+
+As an example, all users in the group `jupyterhub_admins` get
+admin access,
+
+```python
+c.LDAPAuthenticator.admin_groups = [
+    "cn=jupyterhub_admins,ou=groups,dc=wikimedia,dc=org",
+]
+```
+
 #### `LDAPAuthenticator.valid_username_regex` ####
 
 All usernames will be checked against this before being sent
