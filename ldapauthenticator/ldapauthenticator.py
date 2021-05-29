@@ -505,7 +505,7 @@ class LDAPAuthenticator(Authenticator):
         if user_info:
             self.log.debug("username:%s attributes:%s", username, user_info)
             return {"name": username, "auth_state": user_info, "admin": is_admin}
-        return username
+        return {"name": username, "admin": is_admin}
 
 
 if __name__ == "__main__":
