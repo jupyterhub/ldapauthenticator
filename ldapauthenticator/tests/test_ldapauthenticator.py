@@ -14,7 +14,7 @@ async def test_ldap_auth_allowed(authenticator):
     )
     assert not authorized.get("admin", True)
 
-    # allowed user with proper credentials not in admin_groups
+    # allowed user with proper credentials in admin_groups
     authorized = await authenticator.get_authenticated_user(
         None, {"username": "hermes", "password": "hermes"}
     )
