@@ -6,6 +6,7 @@ html5lib  # needed for beautifulsoup
 mock
 notebook
 pre-commit
+psutil
 pytest-asyncio
 pytest-cov
 pytest>=3.3
