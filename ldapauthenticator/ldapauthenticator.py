@@ -86,6 +86,23 @@ class LDAPAuthenticator(Authenticator):
         """,
     )
 
+    admin_groups = List(
+        config=True,
+        allow_none=True,
+        default_value=None,
+        help="""
+        List of LDAP group DNs that users could be mebers of to be granted admin access.
+
+        If a user is in any one of the listed groups, then that user is granted admin
+        access. Membership is tested by fetsching info about each group and looking for
+        the User's DN to be a value of one of `member` or `uniqueMember`, *or* if the
+        username being used is value of the `uid`.
+
+        Setting this to an empty list or None does not have any additional effect unlike
+        allowed_groups.
+        """,
+    )
+
     # FIXME: Use something other than this? THIS IS LAME, akin to websites restricting things you
     # can use in usernames / passwords to protect from SQL injection!
     valid_username_regex = Unicode(
@@ -457,11 +474,38 @@ class LDAPAuthenticator(Authenticator):
         if not self.use_lookup_dn_username:
             username = data["username"]
 
+        is_admin = False
+        if self.admin_groups:
+            self.log.debug(
+                "Searching for admin users with username: %s and dn: %s",
+                username,
+                userdn,
+            )
+            found = False
+            for group in self.admin_groups:
+                group_filter = (
+                    "(|"
+                    "(member={userdn})"
+                    "(uniqueMember={userdn})"
+                    "(memberUid={uid})"
+                    ")"
+                )
+                group_filter = group_filter.format(userdn=userdn, uid=username)
+                group_attributes = ["member", "uniqueMember", "memberUid"]
+                if conn.search(
+                    group,
+                    search_scope=ldap3.BASE,
+                    search_filter=group_filter,
+                    attributes=group_attributes,
+                ):
+                    is_admin = True
+                    break
+
         user_info = self.get_user_attributes(conn, userdn)
         if user_info:
             self.log.debug("username:%s attributes:%s", username, user_info)
-            return {"name": username, "auth_state": user_info}
-        return username
+            return {"name": username, "auth_state": user_info, "admin": is_admin}
+        return {"name": username, "admin": is_admin}
 
 
 if __name__ == "__main__":

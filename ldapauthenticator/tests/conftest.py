@@ -34,4 +34,8 @@ def authenticator():
         "cn=ship_crew,ou=people,dc=planetexpress,dc=com",
     ]
 
+    authenticator.admin_groups = [
+        "cn=admin_staff,ou=people,dc=planetexpress,dc=com",
+    ]
+
     return authenticator
