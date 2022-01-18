@@ -1,5 +1,6 @@
 import re
 import ssl
+
 import ldap3
 from jupyterhub.auth import Authenticator
 from ldap3.utils.conv import escape_filter_chars
@@ -51,7 +52,7 @@ class LDAPAuthenticator(Authenticator):
         Path of the CA certificate file for the *secure* LDAP server
 
         If you're receiving `CERTIFICATE_VERIFY_FAILED` errors, you have to use this setting.
-        """
+        """,
     )
 
     client_certificate_file = Unicode(
@@ -60,7 +61,7 @@ class LDAPAuthenticator(Authenticator):
         Path of the certificate file for the LDAP client
 
         If you're receiving `SSLV3_ALERT_HANDSHAKE_FAILURE` errors, you have to use this setting.
-        """
+        """,
     )
 
     client_key_file = Unicode(
@@ -69,7 +70,7 @@ class LDAPAuthenticator(Authenticator):
         Path of the key file for the LDAP client
 
         If you're receiving `SSLV3_ALERT_HANDSHAKE_FAILURE` errors, you have to use this setting.
-        """
+        """,
     )
 
     bind_dn_template = Union(
@@ -336,22 +337,29 @@ class LDAPAuthenticator(Authenticator):
             ca_cert = None
             client_cert = None
             client_key = None
-            if self.server_ca_file != '':
+            if self.server_ca_file != "":
                 ca_cert = self.server_ca_file
-            if self.client_certificate_file != '':
+            if self.client_certificate_file != "":
                 client_cert = self.client_certificate_file
-            if self.client_key_file != '':
+            if self.client_key_file != "":
                 client_key = self.client_key_file
-            tlsSettings = ldap3.Tls(local_private_key_file=client_key,
-                    local_certificate_file=client_cert,
-                    ca_certs_file=ca_cert,
-                    validate=ssl.CERT_REQUIRED)
+            tlsSettings = ldap3.Tls(
+                local_private_key_file=client_key,
+                local_certificate_file=client_cert,
+                ca_certs_file=ca_cert,
+                validate=ssl.CERT_REQUIRED
+            )
             server = ldap3.Server(
-                self.server_address, port=self.server_port, use_ssl=True, tls=tlsSettings
+                self.server_address,
+                port=self.server_port,
+                use_ssl=True,
+                tls=tlsSettings
             )
         else:
             server = ldap3.Server(
-                self.server_address, port=self.server_port, use_ssl=False
+                self.server_address,
+                port=self.server_port,
+                use_ssl=False
             )
         auto_bind = (
             ldap3.AUTO_BIND_NO_TLS if self.use_ssl else ldap3.AUTO_BIND_TLS_BEFORE_BIND
