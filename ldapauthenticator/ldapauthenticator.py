@@ -357,9 +357,7 @@ class LDAPAuthenticator(Authenticator):
             )
         else:
             server = ldap3.Server(
-                self.server_address,
-                port=self.server_port,
-                use_ssl=False
+                self.server_address, port=self.server_port, use_ssl=False
             )
         auto_bind = (
             ldap3.AUTO_BIND_NO_TLS if self.use_ssl else ldap3.AUTO_BIND_TLS_BEFORE_BIND
