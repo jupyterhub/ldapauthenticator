@@ -347,13 +347,13 @@ class LDAPAuthenticator(Authenticator):
                 local_private_key_file=client_key,
                 local_certificate_file=client_cert,
                 ca_certs_file=ca_cert,
-                validate=ssl.CERT_REQUIRED
+                validate=ssl.CERT_REQUIRED,
             )
             server = ldap3.Server(
                 self.server_address,
                 port=self.server_port,
                 use_ssl=True,
-                tls=tlsSettings
+                tls=tlsSettings,
             )
         else:
             server = ldap3.Server(
