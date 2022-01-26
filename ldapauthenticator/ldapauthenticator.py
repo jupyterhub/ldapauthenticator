@@ -86,6 +86,20 @@ class LDAPAuthenticator(Authenticator):
         """,
     )
 
+    use_search_user_to_check_groups = Bool(
+        False,
+        config=True,
+        help="""
+        If set to `True` the search user is used to check if the user to be authenticated is in
+        one of the `allowed_groups`.
+
+        By default the ldap connection of the user to be authenticated is used. This option is
+        useful in ldap environments where the users itself don't have the permission to access the
+        ldap groups in which they are members. The configured search user needs the permission to
+        access ldap groups though.
+        """
+    )
+
     # FIXME: Use something other than this? THIS IS LAME, akin to websites restricting things you
     # can use in usernames / passwords to protect from SQL injection!
     valid_username_regex = Unicode(
@@ -229,19 +243,17 @@ class LDAPAuthenticator(Authenticator):
         """,
     )
 
-    def resolve_username(self, username_supplied_by_user):
-        search_dn = self.lookup_dn_search_user
-        if self.escape_userdn:
-            search_dn = escape_filter_chars(search_dn)
-        conn = self.get_connection(
-            userdn=search_dn, password=self.lookup_dn_search_password
-        )
-        is_bound = conn.bind()
-        if not is_bound:
-            msg = "Failed to connect to LDAP server with search user '{search_dn}'"
-            self.log.warning(msg.format(search_dn=search_dn))
-            return (None, None)
 
+    def resolve_username(self, connection, username_supplied_by_user):
+        """Resolves the user name and user dn of the user being authenticated.
+
+        Args:
+            connection: the ldap connection to use
+            username_supplied_by_user: the username supplied by the user
+
+        Returns:
+            tuple: value of ldap attribute `lookup_dn_user_dn_attribute` on user entry and the user dn
+        """
         search_filter = self.lookup_dn_search_filter.format(
             login_attr=self.user_attribute, login=username_supplied_by_user
         )
@@ -260,13 +272,13 @@ class LDAPAuthenticator(Authenticator):
                 attributes=self.user_attribute,
             )
         )
-        conn.search(
+        connection.search(
             search_base=self.user_search_base,
             search_scope=ldap3.SUBTREE,
             search_filter=search_filter,
             attributes=[self.lookup_dn_user_dn_attribute],
         )
-        response = conn.response
+        response = connection.response
         if len(response) == 0 or "attributes" not in response[0].keys():
             msg = (
                 "No entry found for user '{username}' "
@@ -357,8 +369,21 @@ class LDAPAuthenticator(Authenticator):
             )
             return None
 
+        # connect to ldap with search user
+        search_dn = self.lookup_dn_search_user
+        if self.escape_userdn:
+            search_dn = escape_filter_chars(search_dn)
+        connection_search = self.get_connection(
+            userdn=search_dn, password=self.lookup_dn_search_password
+        )
+        if not connection_search.bind():
+            msg = "Failed to connect to LDAP server with search user '{search_dn}'"
+            self.log.warning(msg.format(search_dn=search_dn))
+            return None
+
+        # lookup dn of user to be authenticated
         if self.lookup_dn:
-            username, resolved_dn = self.resolve_username(username)
+            username, resolved_dn = self.resolve_username(connection_search, username)
             if not username:
                 return None
             if str(self.lookup_dn_user_dn_attribute).upper() == "CN":
@@ -367,6 +392,7 @@ class LDAPAuthenticator(Authenticator):
             if not bind_dn_template:
                 bind_dn_template = [resolved_dn]
 
+        # try to authenticate user
         is_bound = False
         for dn in bind_dn_template:
             if not dn:
@@ -379,7 +405,7 @@ class LDAPAuthenticator(Authenticator):
             self.log.debug(msg.format(username=username, userdn=userdn))
             msg = "Status of user bind {username} with {userdn} : {is_bound}"
             try:
-                conn = self.get_connection(userdn, password)
+                connection_user = self.get_connection(userdn, password)
             except ldap3.core.exceptions.LDAPBindError as exc:
                 is_bound = False
                 msg += "\n{exc_type}: {exc_msg}".format(
@@ -387,7 +413,7 @@ class LDAPAuthenticator(Authenticator):
                     exc_msg=exc.args[0] if exc.args else "",
                 )
             else:
-                is_bound = True if conn.bound else conn.bind()
+                is_bound = True if connection_user.bound else connection_user.bind()
             msg = msg.format(username=username, userdn=userdn, is_bound=is_bound)
             self.log.debug(msg)
             if is_bound:
@@ -398,17 +424,18 @@ class LDAPAuthenticator(Authenticator):
             self.log.warning(msg.format(username=username))
             return None
 
+        # validate user access by applying the search filter
         if self.search_filter:
             search_filter = self.search_filter.format(
                 userattr=self.user_attribute, username=username
             )
-            conn.search(
+            connection_user.search(
                 search_base=self.user_search_base,
                 search_scope=ldap3.SUBTREE,
                 search_filter=search_filter,
                 attributes=self.attributes,
             )
-            n_users = len(conn.response)
+            n_users = len(connection_user.response)
             if n_users == 0:
                 msg = "User with '{userattr}={username}' not found in directory"
                 self.log.warning(
@@ -427,6 +454,7 @@ class LDAPAuthenticator(Authenticator):
                 )
                 return None
 
+        # check if user is member in any of the allowed ldap groups
         if self.allowed_groups:
             self.log.debug("username:%s Using dn %s", username, userdn)
             found = False
@@ -440,12 +468,21 @@ class LDAPAuthenticator(Authenticator):
                 )
                 group_filter = group_filter.format(userdn=userdn, uid=username)
                 group_attributes = ["member", "uniqueMember", "memberUid"]
-                found = conn.search(
-                    group,
-                    search_scope=ldap3.BASE,
-                    search_filter=group_filter,
-                    attributes=group_attributes,
-                )
+                # check which ldap connection to use: user (default) or search user
+                if self.use_search_user_to_check_groups is True:
+                    found = connection_search.search(
+                        group,
+                        search_scope=ldap3.BASE,
+                        search_filter=group_filter,
+                        attributes=group_attributes,
+                    )
+                else:
+                    found = connection_user.search(
+                        group,
+                        search_scope=ldap3.BASE,
+                        search_filter=group_filter,
+                        attributes=group_attributes,
+                    )
                 if found:
                     break
             if not found:
@@ -457,7 +494,7 @@ class LDAPAuthenticator(Authenticator):
         if not self.use_lookup_dn_username:
             username = data["username"]
 
-        user_info = self.get_user_attributes(conn, userdn)
+        user_info = self.get_user_attributes(connection_user, userdn)
         if user_info:
             self.log.debug("username:%s attributes:%s", username, user_info)
             return {"name": username, "auth_state": user_info}
