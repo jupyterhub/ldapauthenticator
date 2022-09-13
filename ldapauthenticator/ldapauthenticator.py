@@ -86,6 +86,20 @@ class LDAPAuthenticator(Authenticator):
         """,
     )
 
+    manage_groups = Bool(
+        False,
+        config=True,
+        help="""
+        Let authenticator manage user groups
+
+        If True, Authenticator.authenticate and/or .refresh_user
+        may return a list of group names in the 'groups' field,
+        which will be assigned to the user.
+
+        All group-assignment APIs are disabled if this is True.
+        """,
+    )
+
     # FIXME: Use something other than this? THIS IS LAME, akin to websites restricting things you
     # can use in usernames / passwords to protect from SQL injection!
     valid_username_regex = Unicode(
@@ -140,6 +154,15 @@ class LDAPAuthenticator(Authenticator):
         c.LDAPAuthenticator.bind_dn_template = '{username}'
         ```
         """,
+    )
+
+    group_search_base = Unicode(
+        config=True,
+        default_value=None,
+        allow_none=True,
+        help="""
+        Base for looking up groups in the directory
+        """
     )
 
     user_attribute = Unicode(
@@ -331,6 +354,8 @@ class LDAPAuthenticator(Authenticator):
         username = data["username"]
         password = data["password"]
 
+        return_data = {}
+
         # Protect against invalid usernames as well as LDAP injection attacks
         if not re.match(self.valid_username_regex, username):
             self.log.warning(
@@ -457,12 +482,35 @@ class LDAPAuthenticator(Authenticator):
         if not self.use_lookup_dn_username:
             username = data["username"]
 
+        if self.manage_groups:
+            if not self.group_search_base:
+                self.log.error("User groups lookup not possible. Attribute 'group_search_base' ist not set.")
+
+            lookup_user_groups = conn.search(
+                str(self.group_search_base),
+                search_scope=ldap3.SUBTREE,
+                search_filter=f"(memberUid={username})",
+                attributes=["cn"]
+                )
+            
+            user_groups = []
+            for response in conn.response:
+                groupname = response["attributes"]["cn"][0]
+                user_groups.append(groupname)
+
+            self.log.debug("Found user LDAP groups: " + user_groups)
+
+            return_data["groups"] = user_groups;
+
+
         user_info = self.get_user_attributes(conn, userdn)
         if user_info:
             self.log.debug("username:%s attributes:%s", username, user_info)
-            return {"name": username, "auth_state": user_info}
-        return username
+            return_data["auth_state"] = user_info
 
+        return_data["name"] = username
+
+        return return_data
 
 if __name__ == "__main__":
     import getpass
