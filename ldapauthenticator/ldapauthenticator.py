@@ -498,7 +498,7 @@ class LDAPAuthenticator(Authenticator):
                 groupname = response["attributes"]["cn"][0]
                 user_groups.append(groupname)
 
-            self.log.debug("Found user LDAP groups: " + user_groups)
+            self.log.debug("Found user LDAP groups: " + str(user_groups))
 
             return_data["groups"] = user_groups;
 
