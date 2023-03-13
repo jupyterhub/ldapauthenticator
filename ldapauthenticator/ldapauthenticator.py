@@ -45,6 +45,14 @@ class LDAPAuthenticator(Authenticator):
         """,
     )
 
+    use_tls = Bool(
+        True,
+        config=True,
+        help="""
+        Use TLS to communicate with the LDAP server when SSL is not used.
+        """,
+    )
+
     bind_dn_template = Union(
         [List(), Unicode()],
         config=True,
@@ -309,7 +317,9 @@ class LDAPAuthenticator(Authenticator):
             self.server_address, port=self.server_port, use_ssl=self.use_ssl
         )
         auto_bind = (
-            ldap3.AUTO_BIND_NO_TLS if self.use_ssl else ldap3.AUTO_BIND_NO_TLS
+            ldap3.AUTO_BIND_NO_TLS
+            if self.use_ssl or not self.use_tls
+            else ldap3.AUTO_BIND_TLS_BEFORE_BIND
         )
         conn = ldap3.Connection(
             server, user=userdn, password=password, auto_bind=auto_bind
