@@ -62,6 +62,16 @@ async def test_ldap_auth_ssl(authenticator):
     assert authorized["name"] == "fry"
 
 
+async def test_ldap_auth_tls(authenticator):
+    authenticator.use_tls = True
+
+    # proper username and password in allowed group
+    authorized = await authenticator.get_authenticated_user(
+        None, {"username": "fry", "password": "fry"}
+    )
+    assert authorized["name"] == "fry"
+
+
 async def test_ldap_auth_use_lookup_dn(authenticator):
     authenticator.use_lookup_dn_username = True
 
