@@ -218,6 +218,11 @@ If set to True (the default) the username used to build the DN string is returne
 
 When authenticating on a Linux machine against an AD server this might return something different from the supplied UNIX username. In this case setting this option to False might be a solution.
 
+#### `LDAPAuthenticator.enable_refresh` ####
+If set to True it then periodically checks if a user is still in one the allowed groups.
+This requires `lookup_dn_search_user` and `lookup_dn_search_user` to be set if anonymous login is not allowed.
+The refresh interval can be set with `c.Authenticator.auth_refresh_age`.
+
 ## Compatibility ##
 
 This has been tested against an OpenLDAP server, with the client

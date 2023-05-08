@@ -1,4 +1,5 @@
 # Inspired by https://github.com/jupyterhub/jupyterhub/blob/master/jupyterhub/tests/test_auth.py
+from unittest.mock import Mock
 
 
 async def test_ldap_auth_allowed(authenticator):
@@ -100,3 +101,45 @@ async def test_ldap_auth_state_attributes(authenticator):
     )
     assert authorized["name"] == "fry"
     assert authorized["auth_state"] == {"employeeType": ["Delivery boy"]}
+
+
+async def test_ldap_refresh_user(authenticator):
+    authenticator.allowed_groups = [
+        "cn=admin_staff,ou=people,dc=planetexpress,dc=com",
+        "cn=ship_crew,ou=people,dc=planetexpress,dc=com",
+    ]
+
+    authenticator.enable_refresh = True
+    mock = Mock()
+    attrs = {"name": "zoidberg"}
+    mock.configure_mock(**attrs)
+
+    is_valid = await authenticator.refresh_user(mock, None)
+    assert is_valid == False
+
+    attrs = {"name": "leela"}
+    mock.configure_mock(**attrs)
+
+    is_valid = await authenticator.refresh_user(mock, None)
+    assert is_valid == True
+
+
+async def test_ldap_refresh_user_disabled(authenticator):
+    authenticator.allowed_groups = [
+        "cn=admin_staff,ou=people,dc=planetexpress,dc=com",
+        "cn=ship_crew,ou=people,dc=planetexpress,dc=com",
+    ]
+
+    authenticator.enable_refresh = False
+    mock = Mock()
+    attrs = {"name": "zoidberg"}
+    mock.configure_mock(**attrs)
+
+    is_valid = await authenticator.refresh_user(mock, None)
+    assert is_valid == True
+
+    attrs = {"name": "leela"}
+    mock.configure_mock(**attrs)
+
+    is_valid = await authenticator.refresh_user(mock, None)
+    assert is_valid == True

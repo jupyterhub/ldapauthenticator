@@ -229,6 +229,17 @@ class LDAPAuthenticator(Authenticator):
         """,
     )
 
+    enable_refresh = Bool(
+        False,
+        config=True,
+        help="""
+        If set to true periodically checks if a user is still in one the allowed groups.
+
+        This requires `lookup_dn_search_user` and `lookup_dn_search_user` to be set if anonymous login is not allowed.
+        The refresh interval can be set with `c.Authenticator.auth_refresh_age`.
+        """,
+    )
+
     def resolve_username(self, username_supplied_by_user):
         search_dn = self.lookup_dn_search_user
         if self.escape_userdn:
@@ -462,6 +473,62 @@ class LDAPAuthenticator(Authenticator):
             self.log.debug("username:%s attributes:%s", username, user_info)
             return {"name": username, "auth_state": user_info}
         return username
+
+    async def refresh_user(self, user, handler=None):
+        username = user.name
+        if self.enable_refresh and self.allowed_groups:
+            bind_dn_template = self.bind_dn_template
+            if isinstance(bind_dn_template, str):
+                bind_dn_template = [bind_dn_template]
+
+            if self.lookup_dn:
+                username, resolved_dn = self.resolve_username(username)
+                if not username:
+                    return None
+                if str(self.lookup_dn_user_dn_attribute).upper() == "CN":
+                    # Only escape commas if the lookup attribute is CN
+                    username = re.subn(r"([^\\]),", r"\1\,", username)[0]
+                if not bind_dn_template:
+                    bind_dn_template = [resolved_dn]
+
+            conn = self.get_connection(
+                userdn=self.lookup_dn_search_user,
+                password=self.lookup_dn_search_password,
+            )
+            found = False
+            for dn in bind_dn_template:
+                if not dn:
+                    self.log.warning("Ignoring blank 'bind_dn_template' entry!")
+                    continue
+                userdn = dn.format(username=username)
+                self.log.debug("username:%s Using dn %s", username, userdn)
+
+                for group in self.allowed_groups:
+                    group_filter = (
+                        "(|"
+                        "(member={userdn})"
+                        "(uniqueMember={userdn})"
+                        "(memberUid={uid})"
+                        ")"
+                    )
+                    group_filter = group_filter.format(userdn=userdn, uid=username)
+                    group_attributes = ["member", "uniqueMember", "memberUid"]
+                    found = conn.search(
+                        group,
+                        search_scope=ldap3.BASE,
+                        search_filter=group_filter,
+                        attributes=group_attributes,
+                    )
+                    if found:
+                        return True
+            if not found:
+                # If we reach here, then none of the groups matched
+                msg = "user:{userdn} User not in any of the allowed groups"
+                self.log.warning(msg.format(userdn=userdn))
+                return False
+            return False
+
+        return True
 
 
 if __name__ == "__main__":

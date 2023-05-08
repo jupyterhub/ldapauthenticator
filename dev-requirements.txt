@@ -1,5 +1,5 @@
 beautifulsoup4
-codecov
+codecov==2.1.13
 coverage
 cryptography
 html5lib  # needed for beautifulsoup
