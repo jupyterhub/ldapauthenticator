@@ -2,10 +2,10 @@
 
 Welcome! As a [Jupyter](https://jupyter.org) project, we follow the [Jupyter contributor guide](https://jupyter.readthedocs.io/en/latest/contributor/content-contributor.html).
 
-Make sure to also follow [Project Jupyter's Code of Conduct](https://github.com/jupyter/governance/blob/master/conduct/code_of_conduct.md)
+Make sure to also follow [Project Jupyter's Code of Conduct](https://github.com/jupyter/governance/blob/main/conduct/code_of_conduct.md)
 for a friendly and welcoming collaborative environment.
 
-This guide was adapted from the [contributing guide in the main `jupyterhub` repo.](https://github.com/jupyterhub/jupyterhub/blob/master/CONTRIBUTING.md)
+This guide was adapted from the [contributing guide in the main `jupyterhub` repo.](https://github.com/jupyterhub/jupyterhub/blob/main/CONTRIBUTING.md)
 
 ## Setting up a development environment
 
