@@ -1,34 +1,35 @@
 # Changelog
 
+## 1.3
 
-
-## [1.3]
-
-### [1.3.2] - 2020-08-28
+### 1.3.2 - 2020-08-28
 
 #### Fixes
+
 *  Exchanging ldap3 constants in if/else ([#175](https://github.com/jupyterhub/ldapauthenticator/pull/175)) ([@1kastner](https://github.com/1kastner))
 
-
-### [1.3.1] - 2020-08-13
+### 1.3.1 - 2020-08-13
 
 #### Fixes
+
 * Pin ldap3 version to lower than 2.8 ([#172](https://github.com/jupyterhub/ldapauthenticator/pull/172)) ([@1kastner](https://github.com/1kastner))
 
-
-### [1.3.0] - 2020-02-09
+### 1.3.0 - 2020-02-09
 
 #### Fixes
+
 * Avoid binding the connection twice [#142](https://github.com/jupyterhub/ldapauthenticator/pull/142) ([@m2hofi94](https://github.com/m2hofi94))
 * Gracefully handle username lookups with list return values [#117](https://github.com/jupyterhub/ldapauthenticator/pull/117) ([@metrofun](https://github.com/metrofun))
-* Misc cleanup + fixes [#95](https://github.com/jupyterhub/ldapauthenticator/pull/95) ([@dhirschfeld](https://github.com/dhirschfeld)) - *Empty DN templates are now ignored*, `search_filter` and `allowed_groups` are no longer mutually exclusive*.
+* Misc cleanup + fixes [#95](https://github.com/jupyterhub/ldapauthenticator/pull/95) ([@dhirschfeld](https://github.com/dhirschfeld)) - _Empty DN templates are now ignored, `search_filter` and `allowed_groups` are no longer mutually exclusive._
 
 #### Improvements
+
 * Allow authentication with empty bind_dn_template when using lookup_dn [#106](https://github.com/jupyterhub/ldapauthenticator/pull/106) ([@behrmann](https://github.com/behrmann))
-* Ignore username returned by resolve_username [#105](https://github.com/jupyterhub/ldapauthenticator/pull/105) ([@behrmann](https://github.com/behrmann)) - *`use_lookup_dn_username` configuration option added*
-* Lookup additional LDAP user info [#103](https://github.com/jupyterhub/ldapauthenticator/pull/103) ([@manics](https://github.com/manics)) - *user_info_attributes is now saved in auth_state for a valid user*.
+* Ignore username returned by `resolve_username` [#105](https://github.com/jupyterhub/ldapauthenticator/pull/105) ([@behrmann](https://github.com/behrmann)) - _`use_lookup_dn_username` configuration option added._
+* Lookup additional LDAP user info [#103](https://github.com/jupyterhub/ldapauthenticator/pull/103) ([@manics](https://github.com/manics)) - _`user_info_attributes` is now saved in `auth_state` for a valid user._
 
 #### Maintenance
+
 * Fix CI linting failures and add testing of Py38 [#157](https://github.com/jupyterhub/ldapauthenticator/pull/157) ([@consideRatio](https://github.com/consideRatio))
 * Add long description for pypi [#155](https://github.com/jupyterhub/ldapauthenticator/pull/155) ([@manics](https://github.com/manics))
 * Add badges according to team-compass [#154](https://github.com/jupyterhub/ldapauthenticator/pull/154) ([@consideRatio](https://github.com/consideRatio))
@@ -40,16 +41,15 @@
 * Update README.md [#85](https://github.com/jupyterhub/ldapauthenticator/pull/85) ([@dhirschfeld](https://github.com/dhirschfeld))
 * Bump version to 1.2.2 [#84](https://github.com/jupyterhub/ldapauthenticator/pull/84) ([@dhirschfeld](https://github.com/dhirschfeld))
 
-## Contributors to this release
+#### Contributors to this release
+
 ([GitHub contributors page for this release](https://github.com/jupyterhub/ldapauthenticator/graphs/contributors?from=2018-06-14&to=2020-01-31&type=c))
 
 [@behrmann](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Abehrmann+updated%3A2018-06-14..2020-01-31&type=Issues) | [@betatim](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Abetatim+updated%3A2018-06-14..2020-01-31&type=Issues) | [@consideRatio](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3AconsideRatio+updated%3A2018-06-14..2020-01-31&type=Issues) | [@dhirschfeld](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Adhirschfeld+updated%3A2018-06-14..2020-01-31&type=Issues) | [@irasnyd](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Airasnyd+updated%3A2018-06-14..2020-01-31&type=Issues) | [@m2hofi94](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Am2hofi94+updated%3A2018-06-14..2020-01-31&type=Issues) | [@manics](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Amanics+updated%3A2018-06-14..2020-01-31&type=Issues) | [@marcusianlevine](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Amarcusianlevine+updated%3A2018-06-14..2020-01-31&type=Issues) | [@meeseeksmachine](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Ameeseeksmachine+updated%3A2018-06-14..2020-01-31&type=Issues) | [@metrofun](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Ametrofun+updated%3A2018-06-14..2020-01-31&type=Issues) | [@ramkrishnan8994](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Aramkrishnan8994+updated%3A2018-06-14..2020-01-31&type=Issues) | [@titansmc](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Atitansmc+updated%3A2018-06-14..2020-01-31&type=Issues) | [@yuvipanda](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Ayuvipanda+updated%3A2018-06-14..2020-01-31&type=Issues)
 
+## 1.2
 
-
-## [1.2]
-
-### [1.2.2] - 2018-06-14
+### 1.2.2 - 2018-06-14
 
 Minor patch release for incorrectly escaping commas in `resolved_username`
 
@@ -64,8 +64,7 @@ Minor patch release for incorrectly escaping commas in `resolved_username`
 
 [@dhirschfeld](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Adhirschfeld+updated%3A2018-06-08..2018-06-14&type=Issues) | [@mariusvniekerk](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Amariusvniekerk+updated%3A2018-06-08..2018-06-14&type=Issues)
 
-
-### [1.2.1] - 2018-06-08
+### 1.2.1 - 2018-06-08
 
 Minor patch release for bug in `resolved_username` regex.
 
@@ -82,10 +81,10 @@ Minor patch release for bug in `resolved_username` regex.
 
 [@dhirschfeld](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Adhirschfeld+updated%3A2018-06-07..2018-06-08&type=Issues)
 
-
-### [1.2.0] - 2018-06-07
+### 1.2.0 - 2018-06-07
 
 #### Merged PRs
+
 * Escape comma in resolved_username [#68](https://github.com/jupyterhub/ldapauthenticator/pull/68) ([@dhirschfeld](https://github.com/dhirschfeld))
 * Fixed really bad error [#64](https://github.com/jupyterhub/ldapauthenticator/pull/64) ([@jcrubioa](https://github.com/jcrubioa))
 * Don't force TLS bind if not using SSL. [#61](https://github.com/jupyterhub/ldapauthenticator/pull/61) ([@GrahamDumpleton](https://github.com/GrahamDumpleton))
@@ -104,9 +103,9 @@ Minor patch release for bug in `resolved_username` regex.
 
 [@beenje](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Abeenje+updated%3A2016-11-21..2018-06-07&type=Issues) | [@deebuls](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Adeebuls+updated%3A2016-11-21..2018-06-07&type=Issues) | [@dhirschfeld](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Adhirschfeld+updated%3A2016-11-21..2018-06-07&type=Issues) | [@dirkcgrunwald](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Adirkcgrunwald+updated%3A2016-11-21..2018-06-07&type=Issues) | [@fm75](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Afm75+updated%3A2016-11-21..2018-06-07&type=Issues) | [@GrahamDumpleton](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3AGrahamDumpleton+updated%3A2016-11-21..2018-06-07&type=Issues) | [@jcrubioa](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Ajcrubioa+updated%3A2016-11-21..2018-06-07&type=Issues) | [@kishorchintal](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Akishorchintal+updated%3A2016-11-21..2018-06-07&type=Issues) | [@mateuszboryn](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Amateuszboryn+updated%3A2016-11-21..2018-06-07&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Aminrk+updated%3A2016-11-21..2018-06-07&type=Issues) | [@nklever](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Anklever+updated%3A2016-11-21..2018-06-07&type=Issues) | [@pratik705](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Apratik705+updated%3A2016-11-21..2018-06-07&type=Issues) | [@sauloal](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Asauloal+updated%3A2016-11-21..2018-06-07&type=Issues) | [@toxadx](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Atoxadx+updated%3A2016-11-21..2018-06-07&type=Issues) | [@willingc](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Awillingc+updated%3A2016-11-21..2018-06-07&type=Issues) | [@yuvipanda](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Ayuvipanda+updated%3A2016-11-21..2018-06-07&type=Issues)
 
+## 1.1
 
-
-## [1.1] - 2016-11-21
+### 1.1.0 - 2016-11-21
 
 #### Merged PRs
 * More options for ldap group membership [#22](https://github.com/jupyterhub/ldapauthenticator/pull/22) ([@m0zes](https://github.com/m0zes))
@@ -119,8 +118,8 @@ Minor patch release for bug in `resolved_username` regex.
 
 [@m0zes](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Am0zes+updated%3A2016-03-28..2016-11-21&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Aminrk+updated%3A2016-03-28..2016-11-21&type=Issues) | [@skemper](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Askemper+updated%3A2016-03-28..2016-11-21&type=Issues) | [@yuvipanda](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Ayuvipanda+updated%3A2016-03-28..2016-11-21&type=Issues)
 
+## 1.0
 
-
-## [v1.0] - 2016-03-28
+### 1.0.0 - 2016-03-28
 
 Initial release.
