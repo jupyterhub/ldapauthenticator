@@ -1,16 +1,9 @@
 from setuptools import setup
 
 
-version = "1.3.3.dev"
-
-
-with open("./ldapauthenticator/__init__.py", "a") as f:
-    f.write("\n__version__ = '{}'\n".format(version))
-
-
 setup(
     name="jupyterhub-ldapauthenticator",
-    version=version,
+    version="1.3.3.dev",
     description="LDAP Authenticator for JupyterHub",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
