@@ -1,6 +1,5 @@
 from setuptools import setup
 
-
 setup(
     name="jupyterhub-ldapauthenticator",
     version="1.3.3.dev",
