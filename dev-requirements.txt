@@ -1,6 +1,4 @@
 beautifulsoup4
-codecov
-coverage
 cryptography
 html5lib  # needed for beautifulsoup
 mock

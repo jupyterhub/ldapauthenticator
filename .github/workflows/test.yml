@@ -81,6 +81,5 @@ jobs:
         #        https://github.com/actions/runner/issues/241
         run: pytest -v --color=yes --cov=ldapauthenticator ldapauthenticator/tests
 
-      # https://github.com/marketplace/actions/codecov
-      - name: Submit codecov report
-        uses: codecov/codecov-action@v1
+      # GitHub action reference: https://github.com/codecov/codecov-action
+      - uses: codecov/codecov-action@v3
