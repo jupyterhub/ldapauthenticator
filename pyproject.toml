@@ -48,6 +48,16 @@ filterwarnings = [
 ]
 
 
+# pytest-cov / coverage is used to measure code coverage of tests
+#
+# ref: https://coverage.readthedocs.io/en/stable/config.html
+#
+[tool.coverage.run]
+omit = [
+  "ldapauthenticator/tests/**",
+]
+
+
 # tbump is used to simplify and standardize the release process when updating
 # the version, making a git commit and tag, and pushing changes.
 #
