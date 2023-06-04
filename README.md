@@ -2,9 +2,10 @@
 
 [![Latest PyPI version](https://img.shields.io/pypi/v/jupyterhub-ldapauthenticator?logo=pypi)](https://pypi.python.org/pypi/jupyterhub-ldapauthenticator)
 [![Latest conda-forge version](https://img.shields.io/conda/vn/conda-forge/jupyterhub-ldapauthenticator?logo=conda-forge)](https://anaconda.org/conda-forge/jupyterhub-ldapauthenticator)
-[![GitHub](https://img.shields.io/badge/issue_tracking-github-blue?logo=github)](https://github.com/jupyterhub/ldapauthenticator/issues)
-[![Discourse](https://img.shields.io/badge/help_forum-discourse-blue?logo=discourse)](https://discourse.jupyter.org/c/jupyterhub)
-[![Gitter](https://img.shields.io/badge/social_chat-gitter-blue?logo=gitter)](https://gitter.im/jupyterhub/jupyterhub)
+[![GitHub Workflow Status - Test](https://img.shields.io/github/actions/workflow/status/jupyterhub/ldapauthenticator/test.yaml?logo=github&label=tests)](https://github.com/jupyterhub/ldapauthenticator/actions)
+[![Test coverage of code](https://codecov.io/gh/jupyterhub/ldapauthenticator/branch/main/graph/badge.svg)](https://codecov.io/gh/jupyterhub/ldapauthenticator)
+[![Issue tracking - GitHub](https://img.shields.io/badge/issue_tracking-github-blue?logo=github)](https://github.com/jupyterhub/ldapauthenticator/issues)
+[![Help forum - Discourse](https://img.shields.io/badge/help_forum-discourse-blue?logo=discourse)](https://discourse.jupyter.org/c/jupyterhub)
 
 Simple LDAP Authenticator Plugin for JupyterHub
 
