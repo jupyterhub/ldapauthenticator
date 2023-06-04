@@ -19,4 +19,11 @@ setup(
         "tornado",
         "traitlets",
     ],
+    extras_require={
+        "test": [
+            "pytest",
+            "pytest-asyncio",
+            "pytest-cov",
+        ],
+    },
 )

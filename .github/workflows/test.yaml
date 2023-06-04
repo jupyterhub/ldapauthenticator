@@ -47,7 +47,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           pip install --upgrade pip
-          pip install --upgrade --pre -r dev-requirements.txt .
+          pip install -e ".[test]"
 
       - name: List packages
         run: pip freeze
@@ -57,7 +57,7 @@ jobs:
           # start LDAP server
           ci/docker-ldap.sh
 
-          pytest -v --color=yes --cov=ldapauthenticator ldapauthenticator/tests
+          pytest --cov=ldapauthenticator
 
       # GitHub action reference: https://github.com/codecov/codecov-action
       - uses: codecov/codecov-action@v3
