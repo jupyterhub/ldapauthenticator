@@ -1,4 +1,4 @@
-# Inspired by https://github.com/jupyterhub/jupyterhub/blob/master/jupyterhub/tests/test_auth.py
+# Inspired by https://github.com/jupyterhub/jupyterhub/blob/main/jupyterhub/tests/test_auth.py
 
 
 async def test_ldap_auth_allowed(authenticator):

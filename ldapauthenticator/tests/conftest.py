@@ -1,19 +1,8 @@
-import inspect
 import os
 
 import pytest
 
 from ..ldapauthenticator import LDAPAuthenticator
-
-
-def pytest_collection_modifyitems(items):
-    """add asyncio marker to all async tests"""
-    for item in items:
-        if inspect.iscoroutinefunction(item.obj):
-            item.add_marker("asyncio")
-        if hasattr(inspect, "isasyncgenfunction"):
-            # double-check that we aren't mixing yield and async def
-            assert not inspect.isasyncgenfunction(item.obj)
 
 
 @pytest.fixture(scope="session")

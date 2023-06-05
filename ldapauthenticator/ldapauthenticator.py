@@ -4,11 +4,7 @@ import ldap3
 from jupyterhub.auth import Authenticator
 from ldap3.utils.conv import escape_filter_chars
 from tornado import gen
-from traitlets import Bool
-from traitlets import Int
-from traitlets import List
-from traitlets import Unicode
-from traitlets import Union
+from traitlets import Bool, Int, List, Unicode, Union
 
 
 class LDAPAuthenticator(Authenticator):
@@ -478,7 +474,7 @@ if __name__ == "__main__":
     # here in this example as a combination of the LDAP attributes 'ou', 'mail' and 'uid'
     sf = "(&(o={o})(ou={ou}))".format(o="yourOrganisation", ou="yourOrganisationalUnit")
     sf += "(&(o={o})(mail={mail}))".format(o="yourOrganisation", mail="yourMailAddress")
-    c.search_filter = "(&({{userattr}}={{username}})(|{}))".format(sf)
+    c.search_filter = f"(&({{userattr}}={{username}})(|{sf}))"
     username = input("Username: ")
     passwd = getpass.getpass()
     data = dict(username=username, password=passwd)
