@@ -298,6 +298,10 @@ class LDAPAuthenticator(Authenticator):
                 )
                 user_dn = user_dn[0]
 
+        # Escape username if escape_userdn is True
+        if self.escape_userdn:
+            user_dn = escape_filter_chars(user_dn)
+
         return (user_dn, response[0]["dn"])
 
     def get_connection(self, userdn, password):
