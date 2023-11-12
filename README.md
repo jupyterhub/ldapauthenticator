@@ -60,7 +60,7 @@ To authenticate a user we need the corresponding DN to bind against the LDAP ser
 1. setting `bind_dn_template`, which is a list of string template used to
    generate the full DN for a user from the human readable username, or
 2. setting `lookup_dn` to `True`, which does a reverse lookup to obtain the
-   user's DN. This is because ome LDAP servers, such as Active Directory, don't
+   user's DN. This is because some LDAP servers, such as Active Directory, don't
    always bind with the true DN.
 
 ##### `lookup_dn = False`
