@@ -239,7 +239,8 @@ class LDAPAuthenticator(Authenticator):
             return (None, None)
 
         search_filter = self.lookup_dn_search_filter.format(
-            login_attr=self.user_attribute, login=escape_filter_chars(username_supplied_by_user)
+            login_attr=self.user_attribute,
+            login=escape_filter_chars(username_supplied_by_user),
         )
         msg = "\n".join(
             [
@@ -436,7 +437,7 @@ class LDAPAuthenticator(Authenticator):
                 )
                 group_filter = group_filter.format(
                     userdn=escape_filter_chars(userdn),
-                    uid=escape_filter_chars(username)
+                    uid=escape_filter_chars(username),
                 )
                 group_attributes = ["member", "uniqueMember", "memberUid"]
                 found = conn.search(
