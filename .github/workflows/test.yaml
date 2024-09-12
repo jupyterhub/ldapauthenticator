@@ -31,22 +31,27 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version:
-          - "3.7"
-          - "3.8"
-          - "3.9"
-          - "3.10"
-          - "3.11"
+        include:
+          - python-version: "3.8"
+            pip-install-spec: "jupyterhub==2.3.1 sqlalchemy==1.*"
+          - python-version: "3.9"
+            pip-install-spec: "jupyterhub==3.*"
+          - python-version: "3.10"
+            pip-install-spec: "jupyterhub==4.*"
+          - python-version: "3.11"
+            pip-install-spec: "jupyterhub==5.*"
+          - python-version: "3.12"
+            pip-install-spec: "jupyterhub"
 
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "${{ matrix.python-version }}"
 
       - name: Install Python dependencies
         run: |
-          pip install --upgrade pip
+          pip install ${{ matrix.pip-install-spec }}
           pip install -e ".[test]"
 
       - name: List packages
@@ -60,4 +65,4 @@ jobs:
           pytest --cov=ldapauthenticator
 
       # GitHub action reference: https://github.com/codecov/codecov-action
-      - uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@v4
