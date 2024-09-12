@@ -11,9 +11,9 @@ setup(
     author_email="yuvipanda@riseup.net",
     license="3 Clause BSD",
     packages=["ldapauthenticator"],
-    python_requires=">=3.8",
+    python_requires=">=3.9",
     install_requires=[
-        "jupyterhub>=2.3.1",
+        "jupyterhub>=4.1.6",
         "ldap3",
         "tornado",
         "traitlets",
