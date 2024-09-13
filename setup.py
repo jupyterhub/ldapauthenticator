@@ -25,4 +25,10 @@ setup(
             "pytest-cov",
         ],
     },
+    entry_points={
+        "jupyterhub.authenticators": [
+            "ldap = ldapauthenticator:LDAPAuthenticator",
+            "ldapauthenticator = ldapauthenticator:LDAPAuthenticator",
+        ],
+    },
 )
