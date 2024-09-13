@@ -131,7 +131,7 @@ class LDAPAuthenticator(Authenticator):
         c.LDAPAuthenticator.lookup_dn_search_user = 'ldap_search_user_technical_account'
         c.LDAPAuthenticator.lookup_dn_search_password = 'secret'
         c.LDAPAuthenticator.user_search_base = 'ou=people,dc=wikimedia,dc=org'
-        c.LDAPAuthenticator.user_attribute = 'sAMAccountName'
+        c.LDAPAuthenticator.user_attribute = 'uid'
         c.LDAPAuthenticator.lookup_dn_user_dn_attribute = 'cn'
         c.LDAPAuthenticator.bind_dn_template = '{username}'
         ```
@@ -226,6 +226,10 @@ class LDAPAuthenticator(Authenticator):
     )
 
     def resolve_username(self, username_supplied_by_user):
+        """
+        Resolves a username supplied by a user to the a user DN when lookup_dn
+        is True.
+        """
         search_dn = self.lookup_dn_search_user
         if self.escape_userdn:
             search_dn = escape_filter_chars(search_dn)
@@ -324,6 +328,14 @@ class LDAPAuthenticator(Authenticator):
 
     @gen.coroutine
     def authenticate(self, handler, data):
+        """
+        Note: This function is really meant to identify a user, and
+              check_allowed and check_blocked are meant to determine if its an
+              authorized user. Authorization is currently handled by returning
+              None here instead.
+
+        ref: https://jupyterhub.readthedocs.io/en/latest/reference/authenticators.html#authenticator-authenticate
+        """
         username = data["username"]
         password = data["password"]
 
