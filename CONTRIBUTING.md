@@ -9,8 +9,6 @@ This guide was adapted from the [contributing guide in the main `jupyterhub` rep
 
 ## Setting up a development environment
 
-JupyterHub requires Python >= 3.7.
-
 As a Python project, a development install of JupyterHub follows standard practices for installation and testing.
 
 Note: if you have Docker installed locally, you can run all of the subsequent commands inside of a container after you run the following initial commands:
