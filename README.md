@@ -36,11 +36,14 @@ that this will log out _all_ users who are currently logged in.
 
 ## Usage
 
-You can enable this authenticator with the following lines in your
-`jupyter_config.py`:
+You can enable this authenticator by adding lines to your `jupyterhub_config.py`.
+
+**Note: This file may not exist in your current installation! In TLJH, it
+is located in /opt/tljh/config/jupyterhub_config.d. Create it there if you
+don't already have one.**
 
 ```python
-c.JupyterHub.authenticator_class = 'ldapauthenticator.LDAPAuthenticator'
+c.JupyterHub.authenticator_class = 'ldap'
 ```
 
 ### Required configuration
