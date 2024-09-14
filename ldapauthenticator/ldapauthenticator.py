@@ -4,7 +4,7 @@ import ldap3
 from jupyterhub.auth import Authenticator
 from ldap3.utils.conv import escape_filter_chars
 from tornado import gen
-from traitlets import Bool, Int, List, Unicode, Union
+from traitlets import Bool, Int, List, Unicode, Union, validate
 
 
 class LDAPAuthenticator(Authenticator):
@@ -64,6 +64,19 @@ class LDAPAuthenticator(Authenticator):
         	]
         """,
     )
+
+    @validate("bind_dn_template")
+    def _validate_bind_dn_template(self, proposal):
+        """
+        Ensure a List[str] is set, filtered from empty string elements.
+        """
+        rv = []
+        if isinstance(proposal.value, str):
+            rv = [proposal.value]
+        if "" in rv:
+            self.log.warning("Ignoring blank 'bind_dn_template' entry!")
+            rv = [e for e in rv if e]
+        return rv
 
     allowed_groups = List(
         config=True,
@@ -353,18 +366,14 @@ class LDAPAuthenticator(Authenticator):
             self.log.warning("username:%s Login denied for blank password", username)
             return None
 
-        # bind_dn_template should be of type List[str]
-        bind_dn_template = self.bind_dn_template
-        if isinstance(bind_dn_template, str):
-            bind_dn_template = [bind_dn_template]
-
         # sanity check
-        if not self.lookup_dn and not bind_dn_template:
+        if not self.lookup_dn and not self.bind_dn_template:
             self.log.warning(
                 "Login not allowed, please configure 'lookup_dn' or 'bind_dn_template'."
             )
             return None
 
+        bind_dn_template = self.bind_dn_template
         if self.lookup_dn:
             username, resolved_dn = self.resolve_username(username)
             if not username:
@@ -377,9 +386,6 @@ class LDAPAuthenticator(Authenticator):
 
         is_bound = False
         for dn in bind_dn_template:
-            if not dn:
-                self.log.warning("Ignoring blank 'bind_dn_template' entry!")
-                continue
             userdn = dn.format(username=username)
             if self.escape_userdn:
                 userdn = escape_filter_chars(userdn)
