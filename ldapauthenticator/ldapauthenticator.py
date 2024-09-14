@@ -264,7 +264,7 @@ class LDAPAuthenticator(Authenticator):
             "Looking up user with:\n",
             f"    search_base = '{self.user_search_base}'\n",
             f"    search_filter = '{search_filter}'\n",
-            f"    attributes = '{self.user_attribute}'",
+            f"    attributes = '[{self.lookup_dn_user_dn_attribute}]'",
         )
         conn.search(
             search_base=self.user_search_base,
