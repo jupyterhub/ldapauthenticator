@@ -43,7 +43,7 @@ is located in /opt/tljh/config/jupyterhub_config.d. Create it there if you
 don't already have one.**
 
 ```python
-c.JupyterHub.authenticator_class = 'ldapauthenticator.LDAPAuthenticator'
+c.JupyterHub.authenticator_class = 'ldap'
 ```
 
 ### Required configuration
