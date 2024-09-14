@@ -4,11 +4,7 @@ import ldap3
 from jupyterhub.auth import Authenticator
 from ldap3.utils.conv import escape_filter_chars
 from tornado import gen
-from traitlets import Bool
-from traitlets import Int
-from traitlets import List
-from traitlets import Unicode
-from traitlets import Union
+from traitlets import Bool, Int, List, Unicode, Union, validate
 
 
 class LDAPAuthenticator(Authenticator):
@@ -77,6 +73,19 @@ class LDAPAuthenticator(Authenticator):
         """,
     )
 
+    @validate("bind_dn_template")
+    def _validate_bind_dn_template(self, proposal):
+        """
+        Ensure a List[str] is set, filtered from empty string elements.
+        """
+        rv = []
+        if isinstance(proposal.value, str):
+            rv = [proposal.value]
+        if "" in rv:
+            self.log.warning("Ignoring blank 'bind_dn_template' entry!")
+            rv = [e for e in rv if e]
+        return rv
+
     allowed_groups = List(
         config=True,
         allow_none=True,
@@ -143,7 +152,7 @@ class LDAPAuthenticator(Authenticator):
         c.LDAPAuthenticator.lookup_dn_search_user = 'ldap_search_user_technical_account'
         c.LDAPAuthenticator.lookup_dn_search_password = 'secret'
         c.LDAPAuthenticator.user_search_base = 'ou=people,dc=wikimedia,dc=org'
-        c.LDAPAuthenticator.user_attribute = 'sAMAccountName'
+        c.LDAPAuthenticator.user_attribute = 'uid'
         c.LDAPAuthenticator.lookup_dn_user_dn_attribute = 'cn'
         c.LDAPAuthenticator.bind_dn_template = '{username}'
         ```
@@ -238,6 +247,10 @@ class LDAPAuthenticator(Authenticator):
     )
 
     def resolve_username(self, username_supplied_by_user):
+        """
+        Resolves a username supplied by a user to the a user DN when lookup_dn
+        is True.
+        """
         search_dn = self.lookup_dn_search_user
         if self.escape_userdn:
             search_dn = escape_filter_chars(search_dn)
@@ -338,6 +351,14 @@ class LDAPAuthenticator(Authenticator):
 
     @gen.coroutine
     def authenticate(self, handler, data):
+        """
+        Note: This function is really meant to identify a user, and
+              check_allowed and check_blocked are meant to determine if its an
+              authorized user. Authorization is currently handled by returning
+              None here instead.
+
+        ref: https://jupyterhub.readthedocs.io/en/latest/reference/authenticators.html#authenticator-authenticate
+        """
         username = data["username"]
         password = data["password"]
 
@@ -355,18 +376,14 @@ class LDAPAuthenticator(Authenticator):
             self.log.warning("username:%s Login denied for blank password", username)
             return None
 
-        # bind_dn_template should be of type List[str]
-        bind_dn_template = self.bind_dn_template
-        if isinstance(bind_dn_template, str):
-            bind_dn_template = [bind_dn_template]
-
         # sanity check
-        if not self.lookup_dn and not bind_dn_template:
+        if not self.lookup_dn and not self.bind_dn_template:
             self.log.warning(
                 "Login not allowed, please configure 'lookup_dn' or 'bind_dn_template'."
             )
             return None
 
+        bind_dn_template = self.bind_dn_template
         if self.lookup_dn:
             username, resolved_dn = self.resolve_username(username)
             if not username:
@@ -379,9 +396,6 @@ class LDAPAuthenticator(Authenticator):
 
         is_bound = False
         for dn in bind_dn_template:
-            if not dn:
-                self.log.warning("Ignoring blank 'bind_dn_template' entry!")
-                continue
             userdn = dn.format(username=username)
             if self.escape_userdn:
                 userdn = escape_filter_chars(userdn)
@@ -488,7 +502,7 @@ if __name__ == "__main__":
     # here in this example as a combination of the LDAP attributes 'ou', 'mail' and 'uid'
     sf = "(&(o={o})(ou={ou}))".format(o="yourOrganisation", ou="yourOrganisationalUnit")
     sf += "(&(o={o})(mail={mail}))".format(o="yourOrganisation", mail="yourMailAddress")
-    c.search_filter = "(&({{userattr}}={{username}})(|{}))".format(sf)
+    c.search_filter = f"(&({{userattr}}={{username}})(|{sf}))"
     username = input("Username: ")
     passwd = getpass.getpass()
     data = dict(username=username, password=passwd)

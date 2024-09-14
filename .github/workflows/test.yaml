@@ -1,0 +1,64 @@
+# This is a GitHub workflow defining a set of jobs with a set of steps.
+# ref: https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions
+#
+name: Tests
+
+on:
+  pull_request:
+    paths-ignore:
+      - "**.md"
+      - ".github/workflows/*.yaml"
+      - "!.github/workflows/test.yaml"
+  push:
+    paths-ignore:
+      - "**.md"
+      - ".github/workflows/*.yaml"
+      - "!.github/workflows/test.yaml"
+    branches-ignore:
+      - "dependabot/**"
+      - "pre-commit-ci-update-config"
+    tags: ["**"]
+  workflow_dispatch:
+
+env:
+  LDAP_HOST: 127.0.0.1
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - python-version: "3.9"
+            pip-install-spec: "jupyterhub==4.*"
+          - python-version: "3.12"
+            pip-install-spec: "jupyterhub==5.*"
+          - python-version: "3.x"
+            pip-install-spec: "--pre jupyterhub"
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "${{ matrix.python-version }}"
+
+      - name: Install Python dependencies
+        run: |
+          pip install ${{ matrix.pip-install-spec }}
+          pip install -e ".[test]"
+
+      - name: List packages
+        run: pip freeze
+
+      - name: Run tests
+        run: |
+          # start LDAP server
+          ci/docker-ldap.sh
+
+          pytest --cov=ldapauthenticator
+
+      # GitHub action reference: https://github.com/codecov/codecov-action
+      - uses: codecov/codecov-action@v4

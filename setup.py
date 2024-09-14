@@ -1,16 +1,8 @@
 from setuptools import setup
 
-
-version = "1.3.3.dev"
-
-
-with open("./ldapauthenticator/__init__.py", "a") as f:
-    f.write("\n__version__ = '{}'\n".format(version))
-
-
 setup(
     name="jupyterhub-ldapauthenticator",
-    version=version,
+    version="2.0.0.dev",
     description="LDAP Authenticator for JupyterHub",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
@@ -19,5 +11,24 @@ setup(
     author_email="yuvipanda@riseup.net",
     license="3 Clause BSD",
     packages=["ldapauthenticator"],
-    install_requires=["jupyterhub", "ldap3", "tornado", "traitlets"],
+    python_requires=">=3.9",
+    install_requires=[
+        "jupyterhub>=4.1.6",
+        "ldap3",
+        "tornado",
+        "traitlets",
+    ],
+    extras_require={
+        "test": [
+            "pytest",
+            "pytest-asyncio",
+            "pytest-cov",
+        ],
+    },
+    entry_points={
+        "jupyterhub.authenticators": [
+            "ldap = ldapauthenticator:LDAPAuthenticator",
+            "ldapauthenticator = ldapauthenticator:LDAPAuthenticator",
+        ],
+    },
 )
