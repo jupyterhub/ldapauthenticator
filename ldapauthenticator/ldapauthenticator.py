@@ -247,31 +247,24 @@ class LDAPAuthenticator(Authenticator):
         if self.escape_userdn:
             search_dn = escape_filter_chars(search_dn)
         conn = self.get_connection(
-            userdn=search_dn, password=self.lookup_dn_search_password
+            userdn=search_dn,
+            password=self.lookup_dn_search_password,
         )
-        is_bound = conn.bind()
-        if not is_bound:
-            msg = "Failed to connect to LDAP server with search user '{search_dn}'"
-            self.log.warning(msg.format(search_dn=search_dn))
+        if not conn.bind():
+            self.log.warning(
+                f"Failed to connect to LDAP server with search user '{search_dn}'"
+            )
             return (None, None)
 
         search_filter = self.lookup_dn_search_filter.format(
-            login_attr=self.user_attribute, login=username_supplied_by_user
-        )
-        msg = "\n".join(
-            [
-                "Looking up user with:",
-                "    search_base = '{search_base}'",
-                "    search_filter = '{search_filter}'",
-                "    attributes = '{attributes}'",
-            ]
+            login_attr=self.user_attribute,
+            login=username_supplied_by_user,
         )
         self.log.debug(
-            msg.format(
-                search_base=self.user_search_base,
-                search_filter=search_filter,
-                attributes=self.user_attribute,
-            )
+            "Looking up user with:\n",
+            f"    search_base = '{self.user_search_base}'\n",
+            f"    search_filter = '{search_filter}'\n",
+            f"    attributes = '{self.user_attribute}'",
         )
         conn.search(
             search_base=self.user_search_base,
@@ -281,14 +274,9 @@ class LDAPAuthenticator(Authenticator):
         )
         response = conn.response
         if len(response) == 0 or "attributes" not in response[0].keys():
-            msg = (
-                "No entry found for user '{username}' "
-                "when looking up attribute '{attribute}'"
-            )
             self.log.warning(
-                msg.format(
-                    username=username_supplied_by_user, attribute=self.user_attribute
-                )
+                f"No entry found for user '{username_supplied_by_user}' "
+                f"when looking up attribute '{self.user_attribute}'"
             )
             return (None, None)
 
@@ -299,19 +287,11 @@ class LDAPAuthenticator(Authenticator):
             elif len(user_dn) == 1:
                 user_dn = user_dn[0]
             else:
-                msg = (
-                    "A lookup of the username '{username}' returned a list "
-                    "of entries for the attribute '{attribute}'. Only the "
-                    "first among these ('{first_entry}') was used. The other "
-                    "entries ({other_entries}) were ignored."
-                )
                 self.log.warn(
-                    msg.format(
-                        username=username_supplied_by_user,
-                        attribute=self.lookup_dn_user_dn_attribute,
-                        first_entry=user_dn[0],
-                        other_entries=", ".join(user_dn[1:]),
-                    )
+                    f"A lookup of the username '{username_supplied_by_user}' returned a list "
+                    f"of entries for the attribute '{self.lookup_dn_user_dn_attribute}'. Only "
+                    f"the first among these ('{user_dn[0]}') was used. The other entries "
+                    f"({', '.join(user_dn[1:])}) were ignored."
                 )
                 user_dn = user_dn[0]
 
@@ -389,8 +369,7 @@ class LDAPAuthenticator(Authenticator):
             userdn = dn.format(username=username)
             if self.escape_userdn:
                 userdn = escape_filter_chars(userdn)
-            msg = "Attempting to bind {username} with {userdn}"
-            self.log.debug(msg.format(username=username, userdn=userdn))
+            self.log.debug(f"Attempting to bind {username} with {userdn}")
             msg = "Status of user bind {username} with {userdn} : {is_bound}"
             try:
                 conn = self.get_connection(userdn, password)
@@ -408,8 +387,7 @@ class LDAPAuthenticator(Authenticator):
                 break
 
         if not is_bound:
-            msg = "Invalid password for user '{username}'"
-            self.log.warning(msg.format(username=username))
+            self.log.warning(f"Invalid password for user '{username}'")
             return None
 
         if self.search_filter:
@@ -424,20 +402,14 @@ class LDAPAuthenticator(Authenticator):
             )
             n_users = len(conn.response)
             if n_users == 0:
-                msg = "User with '{userattr}={username}' not found in directory"
                 self.log.warning(
-                    msg.format(userattr=self.user_attribute, username=username)
+                    f"User with '{self.user_attribute}={username}' not found in directory"
                 )
                 return None
             if n_users > 1:
-                msg = (
-                    "Duplicate users found! "
-                    "{n_users} users found with '{userattr}={username}'"
-                )
                 self.log.warning(
-                    msg.format(
-                        userattr=self.user_attribute, username=username, n_users=n_users
-                    )
+                    "Duplicate users found! {n_users} users found "
+                    f"with '{self.user_attribute}={username}'"
                 )
                 return None
 
@@ -464,8 +436,9 @@ class LDAPAuthenticator(Authenticator):
                     break
             if not found:
                 # If we reach here, then none of the groups matched
-                msg = "username:{username} User not in any of the allowed groups"
-                self.log.warning(msg.format(username=username))
+                self.log.warning(
+                    f"username:{username} User not in any of the allowed groups"
+                )
                 return None
 
         if not self.use_lookup_dn_username:
