@@ -75,7 +75,6 @@ async def test_ldap_auth_use_lookup_dn(authenticator):
         None, {"username": "fry", "password": "fry"}
     )
     assert authorized["name"] == "philip j. fry"
-    authenticator.use_lookup_dn_username = False
 
 
 async def test_ldap_auth_search_filter(authenticator):
