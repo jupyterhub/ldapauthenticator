@@ -450,12 +450,13 @@ class LDAPAuthenticator(Authenticator):
         is_bound = False
         for dn in bind_dn_template:
             userdn = dn.format(username=username)
-            if self.escape_userdn:
-                userdn = escape_filter_chars(userdn)
             self.log.debug(f"Attempting to bind {username} with {userdn}")
             msg = "Status of user bind {username} with {userdn} : {is_bound}"
             try:
-                conn = self.get_connection(userdn, password)
+                if self.escape_userdn:
+                    conn = self.get_connection(escape_filter_chars(userdn), password)
+                else:
+                    conn = self.get_connection(userdn, password)
             except ldap3.core.exceptions.LDAPBindError as exc:
                 is_bound = False
                 msg += "\n{exc_type}: {exc_msg}".format(
