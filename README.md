@@ -249,3 +249,42 @@ JupyterHub create local accounts using the LDAPAuthenticator.
 
 Issue [#19](https://github.com/jupyterhub/ldapauthenticator/issues/19) provides
 additional discussion on local user creation.
+
+## Testing LDAPAuthenticator without JupyterHub
+
+This script can be written to a file such as `test_ldap_auth.py`, and run with
+`python test_ldap_auth.py`, to test use of LDAPAuthenticator with a given config
+without involving JupyterHub.
+
+If the authenticator works, this script should print either None or a username
+depending if the user was considered allowed access.
+
+```python
+import asyncio
+import getpass
+
+from traitlets.config import Config
+from ldapauthenticator import LDAPAuthenticator
+
+# Configure LDAPAuthenticator below to work against your ldap server
+c = Config()
+c.LDAPAuthenticator.server_address = "ldap.organisation.org"
+c.LDAPAuthenticator.server_port = 636
+c.LDAPAuthenticator.bind_dn_template = "uid={username},ou=people,dc=organisation,dc=org"
+c.LDAPAuthenticator.user_attribute = "uid"
+c.LDAPAuthenticator.user_search_base = "ou=people,dc=organisation,dc=org"
+c.LDAPAuthenticator.attributes = ["uid", "cn", "mail", "ou", "o"]
+# The following is an example of a search_filter which is build on LDAP AND and OR operations
+# here in this example as a combination of the LDAP attributes 'ou', 'mail' and 'uid'
+sf = "(&(o={o})(ou={ou}))".format(o="yourOrganisation", ou="yourOrganisationalUnit")
+sf += "(&(o={o})(mail={mail}))".format(o="yourOrganisation", mail="yourMailAddress")
+c.LDAPAuthenticator.search_filter = f"(&({{userattr}}={{username}})(|{sf}))"
+
+# Run test
+authenticator = LDAPAuthenticator(config=c)
+username = input("Username: ")
+password = getpass.getpass()
+data = dict(username=username, password=password)
+return_value = asyncio.run(authenticator.authenticate(None, data))
+print(return_value)
+```

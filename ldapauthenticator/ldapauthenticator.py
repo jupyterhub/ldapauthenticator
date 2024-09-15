@@ -450,26 +450,3 @@ class LDAPAuthenticator(Authenticator):
             self.log.debug("username:%s attributes:%s", username, user_info)
             return {"name": username, "auth_state": user_info}
         return username
-
-
-if __name__ == "__main__":
-    import asyncio
-    import getpass
-
-    c = LDAPAuthenticator()
-    c.server_address = "ldap.organisation.org"
-    c.server_port = 636
-    c.bind_dn_template = "uid={username},ou=people,dc=organisation,dc=org"
-    c.user_attribute = "uid"
-    c.user_search_base = "ou=people,dc=organisation,dc=org"
-    c.attributes = ["uid", "cn", "mail", "ou", "o"]
-    # The following is an example of a search_filter which is build on LDAP AND and OR operations
-    # here in this example as a combination of the LDAP attributes 'ou', 'mail' and 'uid'
-    sf = "(&(o={o})(ou={ou}))".format(o="yourOrganisation", ou="yourOrganisationalUnit")
-    sf += "(&(o={o})(mail={mail}))".format(o="yourOrganisation", mail="yourMailAddress")
-    c.search_filter = f"(&({{userattr}}={{username}})(|{sf}))"
-    username = input("Username: ")
-    passwd = getpass.getpass()
-    data = dict(username=username, password=passwd)
-    rs = asyncio.run(c.authenticate(None, data))
-    print(rs)
