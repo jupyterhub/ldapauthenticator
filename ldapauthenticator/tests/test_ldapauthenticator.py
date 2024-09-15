@@ -5,6 +5,8 @@ Testing data is hardcoded in docker-test-openldap, described at
 https://github.com/rroemhild/docker-test-openldap?tab=readme-ov-file#ldap-structure
 """
 
+from ..ldapauthenticator import TlsStrategy
+
 
 async def test_ldap_auth_allowed(authenticator):
     # proper username and password in allowed group
@@ -56,14 +58,13 @@ async def test_ldap_auth_blank_template(authenticator):
     assert authorized["name"] == "fry"
 
 
-async def test_ldap_auth_ssl(authenticator):
-    authenticator.use_ssl = True
+async def test_ldap_use_ssl_deprecation(authenticator):
+    assert authenticator.tls_strategy == TlsStrategy.before_bind
 
-    # proper username and password in allowed group
-    authorized = await authenticator.get_authenticated_user(
-        None, {"username": "fry", "password": "fry"}
-    )
-    assert authorized["name"] == "fry"
+    # setting use_ssl to True should result in tls_strategy being set to
+    # on_connect
+    authenticator.use_ssl = True
+    assert authenticator.tls_strategy == TlsStrategy.on_connect
 
 
 async def test_ldap_auth_tls_strategy_on_connect(authenticator):
