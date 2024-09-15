@@ -14,7 +14,7 @@ setup(
     python_requires=">=3.9",
     install_requires=[
         "jupyterhub>=4.1.6",
-        "ldap3",
+        "ldap3>=2.9.1",
         "traitlets",
     ],
     extras_require={
