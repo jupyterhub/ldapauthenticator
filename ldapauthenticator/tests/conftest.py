@@ -5,7 +5,7 @@ import pytest
 from ..ldapauthenticator import LDAPAuthenticator
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def authenticator():
     authenticator = LDAPAuthenticator()
     authenticator.server_address = os.environ.get("LDAP_HOST", "localhost")

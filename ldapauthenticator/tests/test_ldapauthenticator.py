@@ -1,4 +1,9 @@
-# Inspired by https://github.com/jupyterhub/jupyterhub/blob/main/jupyterhub/tests/test_auth.py
+"""
+Inspired by https://github.com/jupyterhub/jupyterhub/blob/main/jupyterhub/tests/test_auth.py
+
+Testing data is hardcoded in docker-test-openldap, described at
+https://github.com/rroemhild/docker-test-openldap?tab=readme-ov-file#ldap-structure
+"""
 
 
 async def test_ldap_auth_allowed(authenticator):
@@ -70,7 +75,6 @@ async def test_ldap_auth_use_lookup_dn(authenticator):
         None, {"username": "fry", "password": "fry"}
     )
     assert authorized["name"] == "philip j. fry"
-    authenticator.use_lookup_dn_username = False
 
 
 async def test_ldap_auth_search_filter(authenticator):
