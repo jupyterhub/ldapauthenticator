@@ -67,6 +67,10 @@ async def test_ldap_auth_ssl(authenticator):
 
 
 async def test_ldap_auth_tls_strategy_on_connect(authenticator):
+    """
+    Verifies basic function of the authenticator with a given tls_strategy
+    without actually confirming use of that strategy.
+    """
     authenticator.tls_strategy = "on_connect"
 
     # proper username and password in allowed group
@@ -77,6 +81,10 @@ async def test_ldap_auth_tls_strategy_on_connect(authenticator):
 
 
 async def test_ldap_auth_tls_strategy_insecure(authenticator):
+    """
+    Verifies basic function of the authenticator with a given tls_strategy
+    without actually confirming use of that strategy.
+    """
     authenticator.tls_strategy = "insecure"
 
     # proper username and password in allowed group
