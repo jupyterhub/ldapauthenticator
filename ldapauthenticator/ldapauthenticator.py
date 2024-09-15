@@ -3,7 +3,6 @@ import re
 import ldap3
 from jupyterhub.auth import Authenticator
 from ldap3.utils.conv import escape_filter_chars
-from tornado import gen
 from traitlets import Bool, Int, List, Unicode, Union, validate
 
 
@@ -319,8 +318,7 @@ class LDAPAuthenticator(Authenticator):
                 attrs = conn.entries[0].entry_attributes_as_dict
         return attrs
 
-    @gen.coroutine
-    def authenticate(self, handler, data):
+    async def authenticate(self, handler, data):
         """
         Note: This function is really meant to identify a user, and
               check_allowed and check_blocked are meant to determine if its an
@@ -455,6 +453,7 @@ class LDAPAuthenticator(Authenticator):
 
 
 if __name__ == "__main__":
+    import asyncio
     import getpass
 
     c = LDAPAuthenticator()
@@ -472,5 +471,5 @@ if __name__ == "__main__":
     username = input("Username: ")
     passwd = getpass.getpass()
     data = dict(username=username, password=passwd)
-    rs = c.authenticate(None, data)
-    print(rs.result())
+    rs = asyncio.run(c.authenticate(None, data))
+    print(rs)
