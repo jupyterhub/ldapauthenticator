@@ -58,7 +58,26 @@ async def test_ldap_auth_blank_template(authenticator):
 
 async def test_ldap_auth_ssl(authenticator):
     authenticator.use_ssl = True
-    authenticator.server_port = 636
+
+    # proper username and password in allowed group
+    authorized = await authenticator.get_authenticated_user(
+        None, {"username": "fry", "password": "fry"}
+    )
+    assert authorized["name"] == "fry"
+
+
+async def test_ldap_auth_tls_strategy_on_connect(authenticator):
+    authenticator.tls_strategy = "on_connect"
+
+    # proper username and password in allowed group
+    authorized = await authenticator.get_authenticated_user(
+        None, {"username": "fry", "password": "fry"}
+    )
+    assert authorized["name"] == "fry"
+
+
+async def test_ldap_auth_tls_strategy_insecure(authenticator):
+    authenticator.tls_strategy = "insecure"
 
     # proper username and password in allowed group
     authorized = await authenticator.get_authenticated_user(

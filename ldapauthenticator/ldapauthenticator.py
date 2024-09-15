@@ -1,9 +1,21 @@
+import enum
 import re
 
 import ldap3
 from jupyterhub.auth import Authenticator
 from ldap3.utils.conv import escape_filter_chars
-from traitlets import Bool, Int, List, Unicode, Union, validate
+from traitlets import Bool, Int, List, Unicode, Union, UseEnum, observe, validate
+
+
+class TlsStrategy(enum.Enum):
+    """
+    Represents a SSL/TLS strategy for LDAPAuthenticator to use when interacting
+    with the LDAP server.
+    """
+
+    before_bind = 1
+    on_connect = 2
+    insecure = 3
 
 
 class LDAPAuthenticator(Authenticator):
@@ -20,23 +32,62 @@ class LDAPAuthenticator(Authenticator):
         help="""
         Port on which to contact the LDAP server.
 
-        Defaults to `636` if `use_ssl` is set, `389` otherwise.
+        Defaults to `636` if `tls_strategy="on_connect"` is set, `389`
+        otherwise.
         """,
     )
 
     def _server_port_default(self):
-        if self.use_ssl:
+        if self.tls_strategy == TlsStrategy.on_connect:
             return 636  # default SSL port for LDAP
         else:
             return 389  # default plaintext port for LDAP
 
     use_ssl = Bool(
-        False,
+        None,
+        allow_none=True,
         config=True,
         help="""
-        Use SSL to communicate with the LDAP server.
+        `use_ssl` is deprecated since 2.0. `use_ssl=True` translates to configuring
+        `tls_strategy="on_connect"`, but `use_ssl=False` (previous default) doesn't
+        translate to anything.
+        """,
+    )
 
-        Deprecated in version 3 of LDAP. Your LDAP server must be configured to support this, however.
+    @observe("use_ssl")
+    def _observe_use_ssl(self, change):
+        if change.new:
+            self.tls_strategy = TlsStrategy.on_connect
+            self.log.warning(
+                "LDAPAuthenticator.use_ssl is deprecated in 2.0 in favor of LDAPAuthenticator.tls_strategy, "
+                'instead of configuring use_ssl=True, configure use tls_strategy="on_connect" from now on.'
+            )
+        else:
+            self.log.warning(
+                "LDAPAuthenticator.use_ssl is deprecated in 2.0 in favor of LDAPAuthenticator.tls_strategy, "
+                "you can stop configuring use_ssl=False from now on as doing so has no effect."
+            )
+
+    tls_strategy = UseEnum(
+        TlsStrategy,
+        default_value=TlsStrategy.before_bind,
+        config=True,
+        help="""
+        When LDAPAuthenticator connects to the LDAP server, it can establish a
+        SSL/TLS connection directly, or do it before binding, which is LDAP
+        terminology for authenticating and sending sensitive credentials.
+
+        The LDAP v3 protocol deprecated establishing a SSL/TLS connection
+        directly (`tls_strategy="on_connect"`) in favor of upgrading the
+        connection to SSL/TLS before binding (`tls_strategy="before_bind"`).
+
+        Supported `tls_strategy` values are:
+        - "before_bind" (default)
+        - "on_connect" (deprecated in LDAP v3, associated with use of port 636)
+        - "insecure"
+
+        When configuring `tls_strategy="on_connect"`, the default value of
+        `server_port` becomes 636.
         """,
     )
 
@@ -314,14 +365,26 @@ class LDAPAuthenticator(Authenticator):
         return (user_dn, response[0]["dn"])
 
     def get_connection(self, userdn, password):
+        if self.tls_strategy == TlsStrategy.on_connect:
+            use_ssl = True
+            auto_bind = ldap3.AUTO_BIND_NO_TLS
+        elif self.tls_strategy == TlsStrategy.before_bind:
+            use_ssl = False
+            auto_bind = ldap3.AUTO_BIND_TLS_BEFORE_BIND
+        else:  # TlsStrategy.insecure
+            use_ssl = False
+            auto_bind = ldap3.AUTO_BIND_NO_TLS
+
         server = ldap3.Server(
-            self.server_address, port=self.server_port, use_ssl=self.use_ssl
-        )
-        auto_bind = (
-            ldap3.AUTO_BIND_NO_TLS if self.use_ssl else ldap3.AUTO_BIND_TLS_BEFORE_BIND
+            self.server_address,
+            port=self.server_port,
+            use_ssl=use_ssl,
         )
         conn = ldap3.Connection(
-            server, user=userdn, password=password, auto_bind=auto_bind
+            server,
+            user=userdn,
+            password=password,
+            auto_bind=auto_bind,
         )
         return conn
 
