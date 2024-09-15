@@ -15,7 +15,6 @@ setup(
     install_requires=[
         "jupyterhub>=4.1.6",
         "ldap3",
-        "tornado",
         "traitlets",
     ],
     extras_require={
