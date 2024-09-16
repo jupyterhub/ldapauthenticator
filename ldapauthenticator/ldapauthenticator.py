@@ -406,13 +406,13 @@ class LDAPAuthenticator(Authenticator):
             return None
 
         if self.search_filter:
-            search_filter = self.search_filter.format(
-                userattr=self.user_attribute, username=escape_filter_chars(username)
-            )
             conn.search(
                 search_base=self.user_search_base,
                 search_scope=ldap3.SUBTREE,
-                search_filter=search_filter,
+                search_filter=self.search_filter.format(
+                    userattr=self.user_attribute,
+                    username=escape_filter_chars(username),
+                ),
                 attributes=self.attributes,
             )
             n_users = len(conn.response)
@@ -437,17 +437,14 @@ class LDAPAuthenticator(Authenticator):
             self.log.debug("username:%s Using dn %s", username, userdn)
             found = False
             for group in self.allowed_groups:
-                group_search_filter = self.group_search_filter
-                group_search_filter = group_search_filter.format(
-                    userdn=escape_filter_chars(userdn),
-                    uid=escape_filter_chars(username),
-                )
-                group_attributes = self.group_attributes
                 found = conn.search(
                     group,
                     search_scope=ldap3.BASE,
-                    search_filter=group_search_filter,
-                    attributes=group_attributes,
+                    search_filter=self.group_search_filter.format(
+                        userdn=escape_filter_chars(userdn),
+                        uid=escape_filter_chars(username),
+                    ),
+                    attributes=self.group_attributes,
                 )
                 if found:
                     break
