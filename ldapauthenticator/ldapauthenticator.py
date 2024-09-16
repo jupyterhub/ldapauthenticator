@@ -397,7 +397,10 @@ class LDAPAuthenticator(Authenticator):
         attrs = {}
         if self.auth_state_attributes:
             found = conn.search(
-                userdn, "(objectClass=*)", attributes=self.auth_state_attributes
+                search_base=userdn,
+                search_scope=ldap3.SUBTREE,
+                search_filter="(objectClass=*)",
+                attributes=self.auth_state_attributes,
             )
             if found:
                 attrs = conn.entries[0].entry_attributes_as_dict
@@ -506,7 +509,7 @@ class LDAPAuthenticator(Authenticator):
             found = False
             for group in self.allowed_groups:
                 found = conn.search(
-                    group,
+                    search_base=group,
                     search_scope=ldap3.BASE,
                     search_filter=self.group_search_filter.format(
                         userdn=escape_filter_chars(userdn),
