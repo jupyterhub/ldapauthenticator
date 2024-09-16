@@ -104,3 +104,15 @@ async def test_ldap_auth_state_attributes(authenticator):
     )
     assert authorized["name"] == "fry"
     assert authorized["auth_state"] == {"employeeType": ["Delivery boy"]}
+
+
+async def test_ldap_auth_state_attributes2(authenticator):
+    authenticator.group_search_filter = "(cn=ship_crew)"
+    authenticator.group_attributes = ["cn"]
+    authenticator.auth_state_attributes = ["description"]
+    # proper username and password in allowed group
+    authorized = await authenticator.get_authenticated_user(
+        None, {"username": "leela", "password": "leela"}
+    )
+    assert authorized["name"] == "leela"
+    assert authorized["auth_state"] == {"description": ["Mutant"]}

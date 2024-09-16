@@ -94,6 +94,23 @@ class LDAPAuthenticator(Authenticator):
         """,
     )
 
+    group_search_filter = Unicode(
+        config=True,
+        default_value="(|(member={userdn})(uniqueMember={userdn})(memberUid={uid}))",
+        help="""
+        The search filter used to locate groups.
+
+        Certain server types may use different values, and may also
+        reject invalid values by raising exceptions.
+        """,
+    )
+
+    group_attributes = List(
+        config=True,
+        default_value=["member", "uniqueMember", "memberUid"],
+        help="List of attributes to be searched",
+    )
+
     # FIXME: Use something other than this? THIS IS LAME, akin to websites restricting things you
     # can use in usernames / passwords to protect from SQL injection!
     valid_username_regex = Unicode(
@@ -412,25 +429,24 @@ class LDAPAuthenticator(Authenticator):
                 return None
 
         if self.allowed_groups:
+            if not self.group_search_filter or not self.group_attributes:
+                self.log.warning(
+                    "Missing group_search_filter or group_attributes. Both are required."
+                )
+                return None
             self.log.debug("username:%s Using dn %s", username, userdn)
             found = False
             for group in self.allowed_groups:
-                group_filter = (
-                    "(|"
-                    "(member={userdn})"
-                    "(uniqueMember={userdn})"
-                    "(memberUid={uid})"
-                    ")"
-                )
-                group_filter = group_filter.format(
+                group_search_filter = self.group_search_filter
+                group_search_filter = group_search_filter.format(
                     userdn=escape_filter_chars(userdn),
                     uid=escape_filter_chars(username),
                 )
-                group_attributes = ["member", "uniqueMember", "memberUid"]
+                group_attributes = self.group_attributes
                 found = conn.search(
                     group,
                     search_scope=ldap3.BASE,
-                    search_filter=group_filter,
+                    search_filter=group_search_filter,
                     attributes=group_attributes,
                 )
                 if found:
