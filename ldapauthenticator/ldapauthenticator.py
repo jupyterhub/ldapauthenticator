@@ -365,6 +365,11 @@ class LDAPAuthenticator(Authenticator):
         return (user_dn, response[0]["dn"])
 
     def get_connection(self, userdn, password):
+        """
+        Returns a ldap3 Connection object automatically bound to the user.
+
+        ldap3 Connection ref: https://ldap3.readthedocs.io/en/latest/connection.html
+        """
         if self.tls_strategy == TlsStrategy.on_connect:
             use_ssl = True
             auto_bind = ldap3.AUTO_BIND_NO_TLS
