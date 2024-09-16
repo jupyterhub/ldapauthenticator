@@ -167,15 +167,35 @@ is what most shell username validators do.
 
 #### `LDAPAuthenticator.use_ssl`
 
-Boolean to specify whether to use SSL encryption when contacting
-the LDAP server. If it is left to `False` (the default)
-`LDAPAuthenticator` will try to upgrade connection with StartTLS.
-Set this to be `True` to start SSL connection.
+`use_ssl` is deprecated since 2.0. `use_ssl=True` translates to configuring
+`tls_strategy="on_connect"`, but `use_ssl=False` (previous default) doesn't
+translate to anything.
+
+#### `LDAPAuthenticator.tls_strategy`
+
+When LDAPAuthenticator connects to the LDAP server, it can establish a
+SSL/TLS connection directly, or do it before binding, which is LDAP
+terminology for authenticating and sending sensitive credentials.
+
+The LDAP v3 protocol deprecated establishing a SSL/TLS connection
+directly (`tls_strategy="on_connect"`) in favor of upgrading the
+connection to SSL/TLS before binding (`tls_strategy="before_bind"`).
+
+Supported `tls_strategy` values are:
+
+- "before_bind" (default)
+- "on_connect" (deprecated in LDAP v3, associated with use of port 636)
+- "insecure"
+
+When configuring `tls_strategy="on_connect"`, the default value of
+`server_port` becomes 636.
 
 #### `LDAPAuthenticator.server_port`
 
-Port to use to contact the LDAP server. Defaults to 389 if no SSL
-is being used, and 636 is SSL is being used.
+Port on which to contact the LDAP server.
+
+Defaults to `636` if `tls_strategy="on_connect"` is set, `389`
+otherwise.
 
 #### `LDAPAuthenticator.user_search_base`
 
