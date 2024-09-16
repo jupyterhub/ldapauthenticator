@@ -14,7 +14,6 @@ def authenticator():
     authenticator.user_search_base = "ou=people,dc=planetexpress,dc=com"
     authenticator.user_attribute = "uid"
     authenticator.lookup_dn_user_dn_attribute = "cn"
-    authenticator.escape_userdn = True
     authenticator.attributes = ["uid", "cn", "mail", "ou"]
     authenticator.use_lookup_dn_username = False
 
