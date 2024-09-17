@@ -1,5 +1,6 @@
 import enum
 import re
+from inspect import isawaitable
 
 import ldap3
 from jupyterhub.auth import Authenticator
@@ -499,6 +500,7 @@ class LDAPAuthenticator(Authenticator):
                 )
                 return None
 
+        ldap_groups = []
         if self.allowed_groups:
             if not self.group_search_filter or not self.group_attributes:
                 self.log.warning(
@@ -506,7 +508,6 @@ class LDAPAuthenticator(Authenticator):
                 )
                 return None
             self.log.debug("username:%s Using dn %s", username, userdn)
-            found = False
             for group in self.allowed_groups:
                 found = conn.search(
                     search_base=group,
@@ -518,8 +519,11 @@ class LDAPAuthenticator(Authenticator):
                     attributes=self.group_attributes,
                 )
                 if found:
-                    break
-            if not found:
+                    ldap_groups.append(group)
+                    # we currently only use this in check_allowed,
+                    # so we could stop here, as only one match is relevant
+                    # break
+            if not ldap_groups:
                 # If we reach here, then none of the groups matched
                 self.log.warning(
                     f"username:{username} User not in any of the allowed groups"
@@ -529,8 +533,25 @@ class LDAPAuthenticator(Authenticator):
         if not self.use_lookup_dn_username:
             username = data["username"]
 
-        user_info = self.get_user_attributes(conn, userdn)
-        if user_info:
-            self.log.debug("username:%s attributes:%s", username, user_info)
-            return {"name": username, "auth_state": user_info}
-        return username
+        user_attrs = self.get_user_attributes(conn, userdn)
+        auth_state = {
+            "ldap_groups": ldap_groups,
+            "user_attrs": user_attrs,
+        }
+        self.log.debug("username:%s attributes:%s", username, user_attrs)
+        return {"name": username, "auth_state": auth_state}
+
+    async def check_allowed(self, username, auth_model):
+        allowed = super().check_allowed(username, auth_model)
+        if isawaitable(allowed):
+            allowed = allowed
+        if allowed is True:
+            return True
+        if self.allowed_groups:
+            # check allowed groups
+            in_groups = set((auth_model.get("auth_state") or {}).get("ldap_groups", []))
+            for group in self.allowed_groups:
+                if group in in_groups:
+                    self.log.debug("Allowing %s as member of group %s", username, group)
+                    return True
+        return False
