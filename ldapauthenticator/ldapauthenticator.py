@@ -544,7 +544,7 @@ class LDAPAuthenticator(Authenticator):
     async def check_allowed(self, username, auth_model):
         allowed = super().check_allowed(username, auth_model)
         if isawaitable(allowed):
-            allowed = allowed
+            allowed = await allowed
         if allowed is True:
             return True
         if self.allowed_groups:
