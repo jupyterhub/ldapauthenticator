@@ -107,6 +107,7 @@ async def test_ldap_auth_use_lookup_dn(authenticator):
 
 async def test_ldap_auth_search_filter(authenticator):
     authenticator.allowed_groups = []
+    authenticator.allow_all = True
     authenticator.search_filter = (
         "(&(objectClass=inetOrgPerson)(ou=	Delivering Crew)(cn={username}))"
     )
@@ -115,6 +116,7 @@ async def test_ldap_auth_search_filter(authenticator):
     authorized = await authenticator.get_authenticated_user(
         None, {"username": "fry", "password": "fry"}
     )
+    assert authorized is not None
     assert authorized["name"] == "fry"
 
     # proper username and password but not in search filter
@@ -124,6 +126,46 @@ async def test_ldap_auth_search_filter(authenticator):
     assert authorized is None
 
 
+async def test_allow_config(authenticator):
+    # test various sources of allow config
+
+    # this group allows fry, leela, bender
+    authenticator.allowed_groups = ["cn=ship_crew,ou=people,dc=planetexpress,dc=com"]
+    authenticator.allowed_users = {"zoidberg"}
+
+    # in allowed_groups
+    authorized = await authenticator.get_authenticated_user(
+        None, {"username": "fry", "password": "fry"}
+    )
+    assert authorized is not None
+    assert authorized["name"] == "fry"
+
+    # in allowed_users
+    authorized = await authenticator.get_authenticated_user(
+        None, {"username": "zoidberg", "password": "zoidberg"}
+    )
+    assert authorized is not None
+    assert authorized["name"] == "zoidberg"
+
+    # no match
+    authorized = await authenticator.get_authenticated_user(
+        None, {"username": "professor", "password": "professor"}
+    )
+    assert authorized is None
+    # allow_all grants access
+    if hasattr(authenticator, "allow_all"):
+        authenticator.allow_all = True
+    else:
+        # clear allow config for JupyterHub < 5
+        authenticator.allowed_groups = []
+        authenticator.allowed_users = set()
+    authorized = await authenticator.get_authenticated_user(
+        None, {"username": "professor", "password": "professor"}
+    )
+    assert authorized is not None
+    assert authorized["name"] == "professor"
+
+
 async def test_ldap_auth_state_attributes(authenticator):
     authenticator.auth_state_attributes = ["employeeType"]
     # proper username and password in allowed group
@@ -131,7 +173,9 @@ async def test_ldap_auth_state_attributes(authenticator):
         None, {"username": "fry", "password": "fry"}
     )
     assert authorized["name"] == "fry"
-    assert authorized["auth_state"] == {"employeeType": ["Delivery boy"]}
+    assert authorized["auth_state"]["user_attributes"] == {
+        "employeeType": ["Delivery boy"]
+    }
 
 
 async def test_ldap_auth_state_attributes2(authenticator):
@@ -143,4 +187,4 @@ async def test_ldap_auth_state_attributes2(authenticator):
         None, {"username": "leela", "password": "leela"}
     )
     assert authorized["name"] == "leela"
-    assert authorized["auth_state"] == {"description": ["Mutant"]}
+    assert authorized["auth_state"]["user_attributes"] == {"description": ["Mutant"]}

@@ -1,5 +1,6 @@
 import enum
 import re
+from inspect import isawaitable
 
 import ldap3
 from jupyterhub.auth import Authenticator
@@ -142,6 +143,9 @@ class LDAPAuthenticator(Authenticator):
 
         Set to an empty list or None to allow all users that have an LDAP account to log in,
         without performing any group membership checks.
+
+        When combined with `search_filter`, this strictly reduces the allowed users,
+        i.e. `search_filter` AND `allowed_groups` must both be satisfied.
         """,
     )
 
@@ -286,13 +290,28 @@ class LDAPAuthenticator(Authenticator):
     )
 
     search_filter = Unicode(
-        config=True, help="LDAP3 Search Filter whose results are allowed access"
+        config=True,
+        help="""
+        LDAP3 Search Filter to limit allowed users.
+
+        Matching the search_filter is necessary but not sufficient to grant access.
+        Grant access by setting one or more of `allowed_users`,
+        `allow_all`, `allowed_groups`, etc.
+
+        Users who do not match this filter cannot be allowed
+        by any other configuration.
+        """,
     )
 
     attributes = List(config=True, help="List of attributes to be searched")
 
     auth_state_attributes = List(
-        config=True, help="List of attributes to be returned in auth_state for a user"
+        config=True,
+        help="""
+        List of user attributes to be returned in auth_state
+
+        Will be available in `auth_state["user_attributes"]`
+        """,
     )
 
     use_lookup_dn_username = Bool(
@@ -328,10 +347,10 @@ class LDAPAuthenticator(Authenticator):
             login=escape_filter_chars(username_supplied_by_user),
         )
         self.log.debug(
-            "Looking up user with:\n",
-            f"    search_base = '{self.user_search_base}'\n",
-            f"    search_filter = '{search_filter}'\n",
-            f"    attributes = '[{self.lookup_dn_user_dn_attribute}]'",
+            "Looking up user with:\n"
+            f"    search_base = '{self.user_search_base}'\n"
+            f"    search_filter = '{search_filter}'\n"
+            f"    attributes = '[{self.lookup_dn_user_dn_attribute}]'"
         )
         conn.search(
             search_base=self.user_search_base,
@@ -499,6 +518,7 @@ class LDAPAuthenticator(Authenticator):
                 )
                 return None
 
+        ldap_groups = []
         if self.allowed_groups:
             if not self.group_search_filter or not self.group_attributes:
                 self.log.warning(
@@ -506,7 +526,6 @@ class LDAPAuthenticator(Authenticator):
                 )
                 return None
             self.log.debug("username:%s Using dn %s", username, userdn)
-            found = False
             for group in self.allowed_groups:
                 found = conn.search(
                     search_base=group,
@@ -518,19 +537,49 @@ class LDAPAuthenticator(Authenticator):
                     attributes=self.group_attributes,
                 )
                 if found:
+                    ldap_groups.append(group)
+                    # we currently only use this in check_allowed,
+                    # so we stop here, as only one match is relevant
+                    # if all groups are needed (e.g. for manage_groups)
+                    # we should keep fetching membership
                     break
-            if not found:
-                # If we reach here, then none of the groups matched
-                self.log.warning(
-                    f"username:{username} User not in any of the allowed groups"
-                )
-                return None
 
         if not self.use_lookup_dn_username:
             username = data["username"]
 
-        user_info = self.get_user_attributes(conn, userdn)
-        if user_info:
-            self.log.debug("username:%s attributes:%s", username, user_info)
-            return {"name": username, "auth_state": user_info}
-        return username
+        user_attributes = self.get_user_attributes(conn, userdn)
+        auth_state = {
+            "ldap_groups": ldap_groups,
+            "user_attributes": user_attributes,
+        }
+        self.log.debug("username:%s attributes:%s", username, user_attributes)
+        return {"name": username, "auth_state": auth_state}
+
+    async def check_allowed(self, username, auth_model):
+        if not hasattr(self, "allow_all"):
+            # super for JupyterHub < 5
+            # default behavior: no allow config => allow all
+            if not self.allowed_users and not self.allowed_groups:
+                return True
+            if self.allowed_users and username in self.allowed_users:
+                return True
+        else:
+            allowed = super().check_allowed(username, auth_model)
+            if isawaitable(allowed):
+                allowed = await allowed
+            if allowed is True:
+                return True
+        if self.allowed_groups:
+            # check allowed groups
+            in_groups = set((auth_model.get("auth_state") or {}).get("ldap_groups", []))
+            for group in self.allowed_groups:
+                if group in in_groups:
+                    self.log.debug("Allowing %s as member of group %s", username, group)
+                    return True
+        if self.search_filter:
+            self.log.warning(
+                "User %s matches search_filter %s, but not allowed by allowed_users, allowed_groups, or allow_all.",
+                username,
+                self.search_filter,
+            )
+        return False
