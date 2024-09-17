@@ -153,7 +153,12 @@ async def test_allow_config(authenticator):
     )
     assert authorized is None
     # allow_all grants access
-    authenticator.allow_all = True
+    if hasattr(authenticator, "allow_all"):
+        authenticator.allow_all = True
+    else:
+        # clear allow config for JupyterHub < 5
+        authenticator.allowed_groups = []
+        authenticator.allowed_users = set()
     authorized = await authenticator.get_authenticated_user(
         None, {"username": "professor", "password": "professor"}
     )

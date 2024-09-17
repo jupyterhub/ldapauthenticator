@@ -556,11 +556,19 @@ class LDAPAuthenticator(Authenticator):
         return {"name": username, "auth_state": auth_state}
 
     async def check_allowed(self, username, auth_model):
-        allowed = super().check_allowed(username, auth_model)
-        if isawaitable(allowed):
-            allowed = await allowed
-        if allowed is True:
-            return True
+        if not hasattr(self, "allow_all"):
+            # super for JupyterHub < 5
+            # default behavior: no allow config => allow all
+            if not self.allowed_users and not self.allowed_groups:
+                return True
+            if self.allowed_users and username in self.allowed_users:
+                return True
+        else:
+            allowed = super().check_allowed(username, auth_model)
+            if isawaitable(allowed):
+                allowed = await allowed
+            if allowed is True:
+                return True
         if self.allowed_groups:
             # check allowed groups
             in_groups = set((auth_model.get("auth_state") or {}).get("ldap_groups", []))
