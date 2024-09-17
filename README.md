@@ -244,7 +244,7 @@ are not escaped.
 #### `LDAPAuthenticator.auth_state_attributes`
 
 An optional list of attributes to be fetched for a user after login.
-If found these will be returned as `auth_state`.
+If found, these will be available as `auth_state["user_attributes"]`.
 
 #### `LDAPAuthenticator.use_lookup_dn_username`
 

@@ -306,7 +306,12 @@ class LDAPAuthenticator(Authenticator):
     attributes = List(config=True, help="List of attributes to be searched")
 
     auth_state_attributes = List(
-        config=True, help="List of attributes to be returned in auth_state for a user"
+        config=True,
+        help="""
+        List of user attributes to be returned in auth_state
+
+        Will be available in `auth_state["user_attributes"]`
+        """
     )
 
     use_lookup_dn_username = Bool(
@@ -542,12 +547,12 @@ class LDAPAuthenticator(Authenticator):
         if not self.use_lookup_dn_username:
             username = data["username"]
 
-        user_attrs = self.get_user_attributes(conn, userdn)
+        user_attributes = self.get_user_attributes(conn, userdn)
         auth_state = {
             "ldap_groups": ldap_groups,
-            "user_attrs": user_attrs,
+            "user_attributes": user_attributes,
         }
-        self.log.debug("username:%s attributes:%s", username, user_attrs)
+        self.log.debug("username:%s attributes:%s", username, user_attributes)
         return {"name": username, "auth_state": auth_state}
 
     async def check_allowed(self, username, auth_model):

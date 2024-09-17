@@ -167,7 +167,7 @@ async def test_ldap_auth_state_attributes(authenticator):
         None, {"username": "fry", "password": "fry"}
     )
     assert authorized["name"] == "fry"
-    assert authorized["auth_state"]["user_attrs"] == {"employeeType": ["Delivery boy"]}
+    assert authorized["auth_state"]["user_attributes"] == {"employeeType": ["Delivery boy"]}
 
 
 async def test_ldap_auth_state_attributes2(authenticator):
@@ -179,4 +179,4 @@ async def test_ldap_auth_state_attributes2(authenticator):
         None, {"username": "leela", "password": "leela"}
     )
     assert authorized["name"] == "leela"
-    assert authorized["auth_state"]["user_attrs"] == {"description": ["Mutant"]}
+    assert authorized["auth_state"]["user_attributes"] == {"description": ["Mutant"]}
