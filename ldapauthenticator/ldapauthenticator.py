@@ -547,6 +547,11 @@ class LDAPAuthenticator(Authenticator):
             allowed = await allowed
         if allowed is True:
             return True
+        if self.search_filter and not self.allowed_groups:
+            # search_filter was specified
+            # consider matching this filter sufficient to allow access
+            # _IF_ allowed_groups is unspecified
+            return True
         if self.allowed_groups:
             # check allowed groups
             in_groups = set((auth_model.get("auth_state") or {}).get("ldap_groups", []))
