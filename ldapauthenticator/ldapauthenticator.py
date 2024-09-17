@@ -143,6 +143,9 @@ class LDAPAuthenticator(Authenticator):
 
         Set to an empty list or None to allow all users that have an LDAP account to log in,
         without performing any group membership checks.
+
+        When combined with `search_filter`, this strictly reduces the allowed users,
+        i.e. `search_filter` AND `allowed_groups` must both be satisfied.
         """,
     )
 
