@@ -311,7 +311,7 @@ class LDAPAuthenticator(Authenticator):
         List of user attributes to be returned in auth_state
 
         Will be available in `auth_state["user_attributes"]`
-        """
+        """,
     )
 
     use_lookup_dn_username = Bool(

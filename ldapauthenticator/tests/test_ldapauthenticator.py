@@ -125,6 +125,7 @@ async def test_ldap_auth_search_filter(authenticator):
     )
     assert authorized is None
 
+
 async def test_allow_config(authenticator):
     # test various sources of allow config
 
@@ -167,7 +168,9 @@ async def test_ldap_auth_state_attributes(authenticator):
         None, {"username": "fry", "password": "fry"}
     )
     assert authorized["name"] == "fry"
-    assert authorized["auth_state"]["user_attributes"] == {"employeeType": ["Delivery boy"]}
+    assert authorized["auth_state"]["user_attributes"] == {
+        "employeeType": ["Delivery boy"]
+    }
 
 
 async def test_ldap_auth_state_attributes2(authenticator):
