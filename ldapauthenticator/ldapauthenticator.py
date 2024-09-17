@@ -335,11 +335,6 @@ class LDAPAuthenticator(Authenticator):
             userdn=self.lookup_dn_search_user,
             password=self.lookup_dn_search_password,
         )
-        if not conn.bind():
-            self.log.warning(
-                f"Failed to connect to LDAP server with search user '{self.lookup_dn_search_user}'"
-            )
-            return (None, None)
 
         search_filter = self.lookup_dn_search_filter.format(
             login_attr=self.user_attribute,
