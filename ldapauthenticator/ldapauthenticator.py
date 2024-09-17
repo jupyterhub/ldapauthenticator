@@ -524,8 +524,10 @@ class LDAPAuthenticator(Authenticator):
                 if found:
                     ldap_groups.append(group)
                     # we currently only use this in check_allowed,
-                    # so we could stop here, as only one match is relevant
-                    # break
+                    # so we stop here, as only one match is relevant
+                    # if all groups are needed (e.g. for manage_groups)
+                    # we should keep fetching membership
+                    break
             if not ldap_groups:
                 # If we reach here, then none of the groups matched
                 self.log.warning(
