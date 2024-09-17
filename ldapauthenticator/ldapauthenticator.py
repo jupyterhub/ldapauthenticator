@@ -528,12 +528,6 @@ class LDAPAuthenticator(Authenticator):
                     # if all groups are needed (e.g. for manage_groups)
                     # we should keep fetching membership
                     break
-            if not ldap_groups:
-                # If we reach here, then none of the groups matched
-                self.log.warning(
-                    f"username:{username} User not in any of the allowed groups"
-                )
-                return None
 
         if not self.use_lookup_dn_username:
             username = data["username"]
@@ -551,11 +545,6 @@ class LDAPAuthenticator(Authenticator):
         if isawaitable(allowed):
             allowed = await allowed
         if allowed is True:
-            return True
-        if self.search_filter and not self.allowed_groups:
-            # search_filter was specified
-            # consider matching this filter sufficient to allow access
-            # _IF_ allowed_groups is unspecified
             return True
         if self.allowed_groups:
             # check allowed groups
