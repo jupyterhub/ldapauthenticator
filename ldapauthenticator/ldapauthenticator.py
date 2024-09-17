@@ -290,7 +290,17 @@ class LDAPAuthenticator(Authenticator):
     )
 
     search_filter = Unicode(
-        config=True, help="LDAP3 Search Filter whose results are allowed access"
+        config=True,
+        help="""
+        LDAP3 Search Filter to limit allowed users.
+
+        Matching the search_filter is necessary but not sufficient to grant access.
+        Grant access by setting one or more of `allowed_users`,
+        `allow_all`, `allowed_groups`, etc.
+
+        Users who do not match this filter cannot be allowed
+        by any other configuration.
+        """,
     )
 
     attributes = List(config=True, help="List of attributes to be searched")
@@ -553,4 +563,10 @@ class LDAPAuthenticator(Authenticator):
                 if group in in_groups:
                     self.log.debug("Allowing %s as member of group %s", username, group)
                     return True
+        if self.search_filter:
+            self.log.warning(
+                "User %s matches search_filter %s, but not allowed by allowed_users, allowed_groups, or allow_all.",
+                username,
+                self.search_filter,
+            )
         return False

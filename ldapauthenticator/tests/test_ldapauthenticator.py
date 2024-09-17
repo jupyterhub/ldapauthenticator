@@ -107,6 +107,7 @@ async def test_ldap_auth_use_lookup_dn(authenticator):
 
 async def test_ldap_auth_search_filter(authenticator):
     authenticator.allowed_groups = []
+    authenticator.allow_all = True
     authenticator.search_filter = (
         "(&(objectClass=inetOrgPerson)(ou=	Delivering Crew)(cn={username}))"
     )
@@ -115,6 +116,7 @@ async def test_ldap_auth_search_filter(authenticator):
     authorized = await authenticator.get_authenticated_user(
         None, {"username": "fry", "password": "fry"}
     )
+    assert authorized is not None
     assert authorized["name"] == "fry"
 
     # proper username and password but not in search filter
@@ -122,6 +124,40 @@ async def test_ldap_auth_search_filter(authenticator):
         None, {"username": "zoidberg", "password": "zoidberg"}
     )
     assert authorized is None
+
+async def test_allow_config(authenticator):
+    # test various sources of allow config
+
+    # this group allows fry, leela, bender
+    authenticator.allowed_groups = ["cn=ship_crew,ou=people,dc=planetexpress,dc=com"]
+    authenticator.allowed_users = {"zoidberg"}
+
+    # in allowed_groups
+    authorized = await authenticator.get_authenticated_user(
+        None, {"username": "fry", "password": "fry"}
+    )
+    assert authorized is not None
+    assert authorized["name"] == "fry"
+
+    # in allowed_users
+    authorized = await authenticator.get_authenticated_user(
+        None, {"username": "zoidberg", "password": "zoidberg"}
+    )
+    assert authorized is not None
+    assert authorized["name"] == "zoidberg"
+
+    # no match
+    authorized = await authenticator.get_authenticated_user(
+        None, {"username": "professor", "password": "professor"}
+    )
+    assert authorized is None
+    # allow_all grants access
+    authenticator.allow_all = True
+    authorized = await authenticator.get_authenticated_user(
+        None, {"username": "professor", "password": "professor"}
+    )
+    assert authorized is not None
+    assert authorized["name"] == "professor"
 
 
 async def test_ldap_auth_state_attributes(authenticator):
