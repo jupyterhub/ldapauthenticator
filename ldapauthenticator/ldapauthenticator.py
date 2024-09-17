@@ -332,10 +332,10 @@ class LDAPAuthenticator(Authenticator):
             login=escape_filter_chars(username_supplied_by_user),
         )
         self.log.debug(
-            "Looking up user with:\n",
-            f"    search_base = '{self.user_search_base}'\n",
-            f"    search_filter = '{search_filter}'\n",
-            f"    attributes = '[{self.lookup_dn_user_dn_attribute}]'",
+            "Looking up user with:\n"
+            f"    search_base = '{self.user_search_base}'\n"
+            f"    search_filter = '{search_filter}'\n"
+            f"    attributes = '[{self.lookup_dn_user_dn_attribute}]'"
         )
         conn.search(
             search_base=self.user_search_base,
