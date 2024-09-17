@@ -5,6 +5,7 @@ from inspect import isawaitable
 import ldap3
 from jupyterhub.auth import Authenticator
 from ldap3.utils.conv import escape_filter_chars
+from ldap3.utils.dn import escape_rdn
 from traitlets import Bool, Int, List, Unicode, Union, UseEnum, observe, validate
 
 
@@ -166,20 +167,17 @@ class LDAPAuthenticator(Authenticator):
         help="List of attributes to be searched",
     )
 
-    # FIXME: Use something other than this? THIS IS LAME, akin to websites restricting things you
-    # can use in usernames / passwords to protect from SQL injection!
     valid_username_regex = Unicode(
         r"^[a-z][.a-z0-9_-]*$",
         config=True,
         help="""
-        Regex for validating usernames - those that do not match this regex will be rejected.
+        Regex for validating usernames - those that do not match this regex will
+        be rejected.
 
-        This is primarily used as a measure against LDAP injection, which has fatal security
-        considerations. The default works for most LDAP installations, but some users might need
-        to modify it to fit their custom installs. If you are modifying it, be sure to understand
-        the implications of allowing additional characters in usernames and what that means for
-        LDAP injection issues. See https://www.owasp.org/index.php/LDAP_injection for an overview
-        of LDAP injection.
+        This config was primarily introduced to prevent LDAP injection
+        (https://www.owasp.org/index.php/LDAP_injection), but that is since 2.0
+        being mitigated by escaping all sensitive characters when interacting
+        with the LDAP server.
         """,
     )
 
@@ -250,7 +248,8 @@ class LDAPAuthenticator(Authenticator):
         default_value=None,
         allow_none=True,
         help="""
-        Technical account for user lookup, if `lookup_dn` is set to True.
+        DN for a technical user account allowed to search for information about
+        provided username, if `lookup_dn` is set to True.
 
         If both lookup_dn_search_user and lookup_dn_search_password are None, then anonymous LDAP query will be done.
         """,
@@ -282,12 +281,15 @@ class LDAPAuthenticator(Authenticator):
         False,
         config=True,
         help="""
-        If set to True, escape special chars in userdn when authenticating in LDAP.
-
-        On some LDAP servers, when userdn contains chars like '(', ')', '\' authentication may fail when those chars
-        are not escaped.
+        Removed in 2.0, configuring this no longer has any effect.
         """,
     )
+
+    @observe("escape_userdn")
+    def _observe_escape_userdn(self, change):
+        self.log.warning(
+            "LDAPAuthenticator.escape_userdn was removed in 2.0 and no longer has any effect."
+        )
 
     search_filter = Unicode(
         config=True,
@@ -329,16 +331,13 @@ class LDAPAuthenticator(Authenticator):
         Resolves a username supplied by a user to the a user DN when lookup_dn
         is True.
         """
-        search_dn = self.lookup_dn_search_user
-        if self.escape_userdn:
-            search_dn = escape_filter_chars(search_dn)
         conn = self.get_connection(
-            userdn=search_dn,
+            userdn=self.lookup_dn_search_user,
             password=self.lookup_dn_search_password,
         )
         if not conn.bind():
             self.log.warning(
-                f"Failed to connect to LDAP server with search user '{search_dn}'"
+                f"Failed to connect to LDAP server with search user '{self.lookup_dn_search_user}'"
             )
             return (None, None)
 
@@ -463,17 +462,12 @@ class LDAPAuthenticator(Authenticator):
             username, resolved_dn = self.resolve_username(username)
             if not username:
                 return None
-            if str(self.lookup_dn_user_dn_attribute).upper() == "CN":
-                # Only escape commas if the lookup attribute is CN
-                username = re.subn(r"([^\\]),", r"\1\,", username)[0]
             if not bind_dn_template:
                 bind_dn_template = [resolved_dn]
 
         is_bound = False
         for dn in bind_dn_template:
-            userdn = dn.format(username=username)
-            if self.escape_userdn:
-                userdn = escape_filter_chars(userdn)
+            userdn = dn.format(username=escape_rdn(username))
             self.log.debug(f"Attempting to bind {username} with {userdn}")
             msg = "Status of user bind {username} with {userdn} : {is_bound}"
             try:

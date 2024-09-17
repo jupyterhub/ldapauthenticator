@@ -235,12 +235,6 @@ Attribute containing user's name needed for building DN string, if `lookup_dn` i
 See `user_search_base` for info on how this attribute is used.
 For most LDAP servers, this is username. For Active Directory, it is cn.
 
-#### `LDAPAuthenticator.escape_userdn`
-
-If set to True, escape special chars in userdn when authenticating in LDAP.
-On some LDAP servers, when userdn contains chars like '(', ')', '\' authentication may fail when those chars
-are not escaped.
-
 #### `LDAPAuthenticator.auth_state_attributes`
 
 An optional list of attributes to be fetched for a user after login.
@@ -274,7 +268,6 @@ c.LDAPAuthenticator.lookup_dn_search_password = 'secret'
 c.LDAPAuthenticator.user_search_base = 'ou=people,dc=wikimedia,dc=org'
 c.LDAPAuthenticator.user_attribute = 'sAMAccountName'
 c.LDAPAuthenticator.lookup_dn_user_dn_attribute = 'cn'
-c.LDAPAuthenticator.escape_userdn = False
 ```
 
 In setup above, first LDAP will be searched (with account ldap_search_user_technical_account) for users that have sAMAccountName=login
