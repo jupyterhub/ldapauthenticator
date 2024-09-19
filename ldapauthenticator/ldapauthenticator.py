@@ -337,6 +337,9 @@ class LDAPAuthenticator(Authenticator):
             password=self.lookup_dn_search_password,
         )
         if not conn:
+            self.log.error(
+                f"Failed to bind lookup_dn_search_user '{self.lookup_dn_search_user}'"
+            )
             return (None, None)
 
         search_filter = self.lookup_dn_search_filter.format(
@@ -415,7 +418,7 @@ class LDAPAuthenticator(Authenticator):
                 auto_bind=auto_bind,
             )
         except LDAPBindError as e:
-            self.log.warning(
+            self.log.debug(
                 "Failed to bind {userdn}\n{e_type}: {e_msg}".format(
                     userdn=userdn,
                     e_type=e.__class__.__name__,
