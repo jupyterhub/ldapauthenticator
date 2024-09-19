@@ -521,13 +521,15 @@ class LDAPAuthenticator(Authenticator):
             n_users = len(conn.response)
             if n_users == 0:
                 self.log.warning(
-                    f"User with '{self.user_attribute}={username}' not found in directory"
+                    "Configured search_filter found no user associated with "
+                    f"userattr='{self.user_attribute}' and username='{username}'"
                 )
                 return None
             if n_users > 1:
                 self.log.warning(
-                    "Duplicate users found! {n_users} users found "
-                    f"with '{self.user_attribute}={username}'"
+                    "Configured search_filter found multiple users associated with "
+                    f"userattr='{self.user_attribute}' and username='{username}', a "
+                    "unique match is required."
                 )
                 return None
 
