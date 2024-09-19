@@ -190,6 +190,26 @@ Supported `tls_strategy` values are:
 When configuring `tls_strategy="on_connect"`, the default value of
 `server_port` becomes 636.
 
+#### `LDAPAuthenticator.tls_kwargs`
+
+A dictionary that will be used as keyword arguments for the constructor
+of the ldap3 package's Tls object, influencing encrypted connections to
+the LDAP server.
+
+For details on what can be configured and its effects, refer to the
+ldap3 package's documentation and code:
+
+- ldap3 documentation: https://ldap3.readthedocs.io/en/latest/ssltls.html#the-tls-object
+- ldap3 code: https://github.com/cannatag/ldap3/blob/v2.9.1/ldap3/core/tls.py#L59-L82
+
+You can for example configure this like:
+
+```python
+c.LDAPAuthenticator.tls_kwargs = {
+    "ca_certs_file": "file/path.here",
+}
+```
+
 #### `LDAPAuthenticator.server_port`
 
 Port on which to contact the LDAP server.
