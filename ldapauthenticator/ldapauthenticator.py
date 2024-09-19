@@ -369,10 +369,7 @@ class LDAPAuthenticator(Authenticator):
             self.log.warning(
                 f"Failed to lookup a unique DN for username '{username_supplied_by_user}'"
             )
-            # FIXME: Decide on failing authentication if we don't acquire a
-            #        unique DN. It seems reasonable but hasn't been done
-            #        historically, so it could be a breaking change to fix it.
-            # return (None, None)
+            return (None, None)
         if "attributes" not in response[0].keys():
             self.log.warning(
                 f"Failed to lookup attribute '{self.user_attribute}' for username '{username_supplied_by_user}'"
