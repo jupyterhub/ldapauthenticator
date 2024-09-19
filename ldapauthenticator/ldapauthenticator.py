@@ -382,7 +382,7 @@ class LDAPAuthenticator(Authenticator):
 
     def get_connection(self, userdn, password):
         """
-        Returns either a ldap3 Connection object automatically bound to the
+        Returns either an ldap3 Connection object automatically bound to the
         user, or None if the bind operation failed for some reason.
 
         Raises errors on connectivity or TLS issues.
@@ -491,7 +491,7 @@ class LDAPAuthenticator(Authenticator):
             if conn:
                 break
         if not conn:
-            self.log.warning(f"Failed to bind user '{username}' to a LDAP user.")
+            self.log.warning(f"Failed to bind user '{username}' to an LDAP user.")
             return None
 
         if self.search_filter:
