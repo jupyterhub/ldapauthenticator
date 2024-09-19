@@ -4,6 +4,7 @@ from inspect import isawaitable
 
 import ldap3
 from jupyterhub.auth import Authenticator
+from ldap3.core.exceptions import LDAPBindError
 from ldap3.utils.conv import escape_filter_chars
 from ldap3.utils.dn import escape_rdn
 from traitlets import Bool, Int, List, Unicode, Union, UseEnum, observe, validate
@@ -335,9 +336,9 @@ class LDAPAuthenticator(Authenticator):
             userdn=self.lookup_dn_search_user,
             password=self.lookup_dn_search_password,
         )
-        if not conn.bind():
-            self.log.warning(
-                f"Failed to connect to LDAP server with search user '{self.lookup_dn_search_user}'"
+        if not conn:
+            self.log.error(
+                f"Failed to bind lookup_dn_search_user '{self.lookup_dn_search_user}'"
             )
             return (None, None)
 
@@ -372,7 +373,7 @@ class LDAPAuthenticator(Authenticator):
             elif len(user_dn) == 1:
                 user_dn = user_dn[0]
             else:
-                self.log.warn(
+                self.log.warning(
                     f"A lookup of the username '{username_supplied_by_user}' returned a list "
                     f"of entries for the attribute '{self.lookup_dn_user_dn_attribute}'. Only "
                     f"the first among these ('{user_dn[0]}') was used. The other entries "
@@ -384,9 +385,14 @@ class LDAPAuthenticator(Authenticator):
 
     def get_connection(self, userdn, password):
         """
-        Returns a ldap3 Connection object automatically bound to the user.
+        Returns either an ldap3 Connection object automatically bound to the
+        user, or None if the bind operation failed for some reason.
 
-        ldap3 Connection ref: https://ldap3.readthedocs.io/en/latest/connection.html
+        Raises errors on connectivity or TLS issues.
+
+        ldap3 Connection ref:
+        - docs: https://ldap3.readthedocs.io/en/latest/connection.html
+        - code: https://github.com/cannatag/ldap3/blob/dev/ldap3/core/connection.py
         """
         if self.tls_strategy == TlsStrategy.on_connect:
             use_ssl = True
@@ -403,13 +409,26 @@ class LDAPAuthenticator(Authenticator):
             port=self.server_port,
             use_ssl=use_ssl,
         )
-        conn = ldap3.Connection(
-            server,
-            user=userdn,
-            password=password,
-            auto_bind=auto_bind,
-        )
-        return conn
+        try:
+            self.log.debug(f"Attempting to bind {userdn}")
+            conn = ldap3.Connection(
+                server,
+                user=userdn,
+                password=password,
+                auto_bind=auto_bind,
+            )
+        except LDAPBindError as e:
+            self.log.debug(
+                "Failed to bind {userdn}\n{e_type}: {e_msg}".format(
+                    userdn=userdn,
+                    e_type=e.__class__.__name__,
+                    e_msg=e.args[0] if e.args else "",
+                )
+            )
+            return None
+        else:
+            self.log.debug(f"Successfully bound {userdn}")
+            return conn
 
     def get_user_attributes(self, conn, userdn):
         attrs = {}
@@ -465,28 +484,17 @@ class LDAPAuthenticator(Authenticator):
             if not bind_dn_template:
                 bind_dn_template = [resolved_dn]
 
-        is_bound = False
+        # bind to ldap user
+        conn = None
         for dn in bind_dn_template:
+            # DN's attribute values should be escaped with escape_rdn to respect
+            # https://datatracker.ietf.org/doc/html/rfc4514#section-2.4
             userdn = dn.format(username=escape_rdn(username))
-            self.log.debug(f"Attempting to bind {username} with {userdn}")
-            msg = "Status of user bind {username} with {userdn} : {is_bound}"
-            try:
-                conn = self.get_connection(userdn, password)
-            except ldap3.core.exceptions.LDAPBindError as exc:
-                is_bound = False
-                msg += "\n{exc_type}: {exc_msg}".format(
-                    exc_type=exc.__class__.__name__,
-                    exc_msg=exc.args[0] if exc.args else "",
-                )
-            else:
-                is_bound = True if conn.bound else conn.bind()
-            msg = msg.format(username=username, userdn=userdn, is_bound=is_bound)
-            self.log.debug(msg)
-            if is_bound:
+            conn = self.get_connection(userdn, password)
+            if conn:
                 break
-
-        if not is_bound:
-            self.log.warning(f"Invalid password for user '{username}'")
+        if not conn:
+            self.log.warning(f"Failed to bind user '{username}' to an LDAP user.")
             return None
 
         if self.search_filter:
