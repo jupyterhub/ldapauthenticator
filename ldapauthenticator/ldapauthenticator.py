@@ -359,10 +359,22 @@ class LDAPAuthenticator(Authenticator):
             attributes=[self.lookup_dn_user_dn_attribute],
         )
         response = conn.response
-        if len(response) == 0 or "attributes" not in response[0].keys():
+        if len(response) == 0:
             self.log.warning(
-                f"No entry found for user '{username_supplied_by_user}' "
-                f"when looking up attribute '{self.user_attribute}'"
+                f"Failed to lookup a DN for username '{username_supplied_by_user}'"
+            )
+            return (None, None)
+        if len(response) > 1:
+            self.log.warning(
+                f"Failed to lookup a unique DN for username '{username_supplied_by_user}'"
+            )
+            # FIXME: Decide on failing authentication if we don't acquire a
+            #        unique DN. It seems reasonable but hasn't been done
+            #        historically, so it could be a breaking change to fix it.
+            # return (None, None)
+        if "attributes" not in response[0].keys():
+            self.log.warning(
+                f"Failed to lookup attribute '{self.user_attribute}' for username '{username_supplied_by_user}'"
             )
             return (None, None)
 
