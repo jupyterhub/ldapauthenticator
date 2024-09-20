@@ -246,6 +246,27 @@ If set to True (the default) the username used to build the DN string is returne
 
 When authenticating on a Linux machine against an AD server this might return something different from the supplied UNIX username. In this case setting this option to False might be a solution.
 
+#### `LDAPAuthenticator.search_filter`
+
+LDAP3 Search Filter to limit allowed users.
+
+That a unique LDAP user is identified with the search_filter is
+necessary but not sufficient to grant access. Grant access by setting
+one or more of `allowed_users`, `allow_all`, `allowed_groups`, etc.
+
+Users who do not match this filter cannot be allowed
+by any other configuration.
+
+The search filter string will be expanded, so that:
+
+- `{userattr}` is replaced with the `user_attribute` config's value.
+- `{username}` is replaced with an escaped username, either provided
+  directly or previously looked up with `lookup_dn` configured.
+
+#### `LDAPAuthenticator.attributes`
+
+List of attributes to be passed in the LDAP search with `search_filter`.
+
 ## Compatibility
 
 This has been tested against an OpenLDAP server, with the client

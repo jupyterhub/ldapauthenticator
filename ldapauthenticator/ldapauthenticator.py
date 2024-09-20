@@ -297,16 +297,27 @@ class LDAPAuthenticator(Authenticator):
         help="""
         LDAP3 Search Filter to limit allowed users.
 
-        Matching the search_filter is necessary but not sufficient to grant access.
-        Grant access by setting one or more of `allowed_users`,
-        `allow_all`, `allowed_groups`, etc.
+        That a unique LDAP user is identified with the search_filter is
+        necessary but not sufficient to grant access. Grant access by setting
+        one or more of `allowed_users`, `allow_all`, `allowed_groups`, etc.
 
         Users who do not match this filter cannot be allowed
         by any other configuration.
+
+        The search filter string will be expanded, so that:
+
+        - `{userattr}` is replaced with the `user_attribute` config's value.
+        - `{username}` is replaced with an escaped username, either provided
+          directly or previously looked up with `lookup_dn` configured.
         """,
     )
 
-    attributes = List(config=True, help="List of attributes to be searched")
+    attributes = List(
+        config=True,
+        help="""
+        List of attributes to be passed in the LDAP search with `search_filter`.
+        """,
+    )
 
     auth_state_attributes = List(
         config=True,
@@ -521,13 +532,15 @@ class LDAPAuthenticator(Authenticator):
             n_users = len(conn.response)
             if n_users == 0:
                 self.log.warning(
-                    f"User with '{self.user_attribute}={username}' not found in directory"
+                    "Configured search_filter found no user associated with "
+                    f"userattr='{self.user_attribute}' and username='{username}'"
                 )
                 return None
             if n_users > 1:
                 self.log.warning(
-                    "Duplicate users found! {n_users} users found "
-                    f"with '{self.user_attribute}={username}'"
+                    "Configured search_filter found multiple users associated with "
+                    f"userattr='{self.user_attribute}' and username='{username}', a "
+                    "unique match is required."
                 )
                 return None
 
