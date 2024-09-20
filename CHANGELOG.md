@@ -1,5 +1,92 @@
 # Changelog
 
+## 2.0
+
+### 2.0.0b1 - 2024-09-20
+
+([full changelog](https://github.com/jupyterhub/ldapauthenticator/compare/1.3.2...2.0.0b1))
+
+#### Breaking Changes
+
+- `python>=3.9`, `jupyterhub>=4.1.6`, and `ldap3>=2.9.1` is now required.
+  ([#245](https://github.com/jupyterhub/ldapauthenticator/pull/245),
+  [#256](https://github.com/jupyterhub/ldapauthenticator/pull/256))
+- Configuring `auth_state_attributes` now leads to user information being put in
+  `auth_state["user_attributes"]` and not directly in `auth_state`.
+  ([#269](https://github.com/jupyterhub/ldapauthenticator/pull/269))
+- `lookup_dn` now rejects an authenticating user if multiple DNs are returned
+  during lookup. ([#276](https://github.com/jupyterhub/ldapauthenticator/pull/276))
+
+#### Deprecations
+
+- `use_ssl` has been deprecated, instead configure `tls_strategy` going forward.
+  Configuring `use_ssl=True` should be updated with `tls_strategy="on_connect"`,
+  and configuring `use_ssl=False` could be updated to either be
+  `tls_strategy="before_bind"` (default) or `tls_strategy="insecure"`.
+  ([#258](https://github.com/jupyterhub/ldapauthenticator/pull/258))
+- `escape_userdn` has been deprecated, usernames used to construct DNs are now
+  always escaped according to LDAP protocol specification of how DNs should be
+  represented in string format.
+  ([#267](https://github.com/jupyterhub/ldapauthenticator/pull/267))
+
+#### New features added
+
+- Add `tls_kwargs` config to configure underlying ldap3 package tls [#273](https://github.com/jupyterhub/ldapauthenticator/pull/273) ([@consideRatio](https://github.com/consideRatio), [@minrk](https://github.com/minrk))
+- Add `tls_strategy` and deprecate `use_ssl` [#258](https://github.com/jupyterhub/ldapauthenticator/pull/258) ([@consideRatio](https://github.com/consideRatio), [@manics](https://github.com/manics), [@loic-vial](https://github.com/loic-vial), [@1kastner](https://github.com/1kastner))
+- Allow users to configure group search filter and attributes (`group_search_filter` and `group_attributes` config) [#168](https://github.com/jupyterhub/ldapauthenticator/pull/168) ([@kinow](https://github.com/kinow), [@consideRatio](https://github.com/consideRatio), [@manics](https://github.com/manics), [@ordlucas](https://github.com/ordlucas), [@mananpreetsingh](https://github.com/mananpreetsingh))
+
+#### Enhancements made
+
+- Register authenticator class with jupyterhub as ldap [#249](https://github.com/jupyterhub/ldapauthenticator/pull/249) ([@consideRatio](https://github.com/consideRatio), [@minrk](https://github.com/minrk))
+
+#### Bugs fixed
+
+- Require a unique DN to be found when using lookup_dn [#276](https://github.com/jupyterhub/ldapauthenticator/pull/276) ([@consideRatio](https://github.com/consideRatio), [@minrk](https://github.com/minrk))
+- Fix duplicated bind operation, only one is needed [#270](https://github.com/jupyterhub/ldapauthenticator/pull/270) ([@consideRatio](https://github.com/consideRatio), [@minrk](https://github.com/minrk))
+- Escape username within DN correctly and remove `escape_userdn` [#267](https://github.com/jupyterhub/ldapauthenticator/pull/267) ([@consideRatio](https://github.com/consideRatio), [@minrk](https://github.com/minrk))
+- Escape user- or ldap-provided strings in ldap search filters [#238](https://github.com/jupyterhub/ldapauthenticator/pull/238) ([@m-erhardt](https://github.com/m-erhardt), [@consideRatio](https://github.com/consideRatio))
+
+#### Maintenance and upkeep improvements
+
+- Add missing docs for `search_filter` and `attributes` and improve logging for `search_filter` [#275](https://github.com/jupyterhub/ldapauthenticator/pull/275) ([@consideRatio](https://github.com/consideRatio), [@minrk](https://github.com/minrk))
+- Improve logging, docstring, and variable naming in `resolve_username` function [#274](https://github.com/jupyterhub/ldapauthenticator/pull/274) ([@consideRatio](https://github.com/consideRatio), [@minrk](https://github.com/minrk))
+- align `allowed_groups` with other `allowed_` config, consistent in JupyterHub 5 [#269](https://github.com/jupyterhub/ldapauthenticator/pull/269) ([@minrk](https://github.com/minrk), [@consideRatio](https://github.com/consideRatio), [@manics](https://github.com/manics))
+- refactor: specify param names for Connection.search consistently [#268](https://github.com/jupyterhub/ldapauthenticator/pull/268) ([@consideRatio](https://github.com/consideRatio))
+- refactor: reduce use of temporary variables [#264](https://github.com/jupyterhub/ldapauthenticator/pull/264) ([@consideRatio](https://github.com/consideRatio))
+- Relocate example snippet from code to readme [#257](https://github.com/jupyterhub/ldapauthenticator/pull/257) ([@consideRatio](https://github.com/consideRatio))
+- Require ldap3 2.9.1+ released 2021 (currently latest) as a lower bound [#256](https://github.com/jupyterhub/ldapauthenticator/pull/256) ([@consideRatio](https://github.com/consideRatio))
+- Transition to async functions and remove tornado dependency [#255](https://github.com/jupyterhub/ldapauthenticator/pull/255) ([@consideRatio](https://github.com/consideRatio))
+- tests: avoid reuse of authenticator fixture between tests and add docstring [#254](https://github.com/jupyterhub/ldapauthenticator/pull/254) ([@consideRatio](https://github.com/consideRatio))
+- Fix incorrect log message (debug level) [#252](https://github.com/jupyterhub/ldapauthenticator/pull/252) ([@consideRatio](https://github.com/consideRatio))
+- refactor: reduce use of temporary variables like msg for logging [#251](https://github.com/jupyterhub/ldapauthenticator/pull/251) ([@consideRatio](https://github.com/consideRatio))
+- refactor: put validation logic in traitlets validation functions [#250](https://github.com/jupyterhub/ldapauthenticator/pull/250) ([@consideRatio](https://github.com/consideRatio), [@minrk](https://github.com/minrk))
+- Update ldap testing server to the latest available version [#247](https://github.com/jupyterhub/ldapauthenticator/pull/247) ([@consideRatio](https://github.com/consideRatio))
+- Require jupyterhub 4.1.6+ and Python 3.9+ [#245](https://github.com/jupyterhub/ldapauthenticator/pull/245) ([@consideRatio](https://github.com/consideRatio), [@minrk](https://github.com/minrk))
+- Fix traitlets warnings when running tests [#169](https://github.com/jupyterhub/ldapauthenticator/pull/169) ([@kinow](https://github.com/kinow), [@minrk](https://github.com/minrk), [@manics](https://github.com/manics))
+
+#### Documentation improvements
+
+- docs: fix readme example based on investigation by MakarovDi [#262](https://github.com/jupyterhub/ldapauthenticator/pull/262) ([@consideRatio](https://github.com/consideRatio))
+- docs: add two docstrings and fix an example in another [#248](https://github.com/jupyterhub/ldapauthenticator/pull/248) ([@consideRatio](https://github.com/consideRatio))
+- Update README.md with details on jupyterhub_config.py [#242](https://github.com/jupyterhub/ldapauthenticator/pull/242) ([@jdkruzr](https://github.com/jdkruzr), [@consideRatio](https://github.com/consideRatio))
+- Update README.md [#228](https://github.com/jupyterhub/ldapauthenticator/pull/228) ([@ehooi](https://github.com/ehooi), [@yuvipanda](https://github.com/yuvipanda))
+- Add study participation notice to readme [#197](https://github.com/jupyterhub/ldapauthenticator/pull/197) ([@sgibson91](https://github.com/sgibson91), [@yuvipanda](https://github.com/yuvipanda), [@manics](https://github.com/manics))
+
+#### Continuous integration improvements
+
+- ci: test jupyterhub 5 and python 3.12, refresh github workflows [#244](https://github.com/jupyterhub/ldapauthenticator/pull/244) ([@consideRatio](https://github.com/consideRatio))
+- ci: fix testing ldap server port mapping for broken gate [#192](https://github.com/jupyterhub/ldapauthenticator/pull/192) ([@bloodeagle40234](https://github.com/bloodeagle40234), [@manics](https://github.com/manics))
+- ci: Replace Travis with GitHub workflow [#188](https://github.com/jupyterhub/ldapauthenticator/pull/188) ([@manics](https://github.com/manics), [@consideRatio](https://github.com/consideRatio))
+
+#### Contributors to this release
+
+The following people contributed discussions, new ideas, code and documentation contributions, and review.
+See [our definition of contributors](https://github-activity.readthedocs.io/en/latest/#how-does-this-tool-define-contributions-in-the-reports).
+
+([GitHub contributors page for this release](https://github.com/jupyterhub/ldapauthenticator/graphs/contributors?from=2020-08-28&to=2024-09-20&type=c))
+
+@1kastner ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3A1kastner+updated%3A2020-08-28..2024-09-20&type=Issues)) | @Aethylred ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3AAethylred+updated%3A2020-08-28..2024-09-20&type=Issues)) | @bloodeagle40234 ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Abloodeagle40234+updated%3A2020-08-28..2024-09-20&type=Issues)) | @brindapabari ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Abrindapabari+updated%3A2020-08-28..2024-09-20&type=Issues)) | @consideRatio ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3AconsideRatio+updated%3A2020-08-28..2024-09-20&type=Issues)) | @Cronan ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3ACronan+updated%3A2020-08-28..2024-09-20&type=Issues)) | @dhirschfeld ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Adhirschfeld+updated%3A2020-08-28..2024-09-20&type=Issues)) | @dmpe ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Admpe+updated%3A2020-08-28..2024-09-20&type=Issues)) | @edergillian ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Aedergillian+updated%3A2020-08-28..2024-09-20&type=Issues)) | @ehooi ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Aehooi+updated%3A2020-08-28..2024-09-20&type=Issues)) | @GlennHD ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3AGlennHD+updated%3A2020-08-28..2024-09-20&type=Issues)) | @healinyoon ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Ahealinyoon+updated%3A2020-08-28..2024-09-20&type=Issues)) | @jdkruzr ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Ajdkruzr+updated%3A2020-08-28..2024-09-20&type=Issues)) | @kinow ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Akinow+updated%3A2020-08-28..2024-09-20&type=Issues)) | @loic-vial ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Aloic-vial+updated%3A2020-08-28..2024-09-20&type=Issues)) | @m-erhardt ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Am-erhardt+updated%3A2020-08-28..2024-09-20&type=Issues)) | @mananpreetsingh ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Amananpreetsingh+updated%3A2020-08-28..2024-09-20&type=Issues)) | @manics ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Amanics+updated%3A2020-08-28..2024-09-20&type=Issues)) | @mannevijayakrishna ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Amannevijayakrishna+updated%3A2020-08-28..2024-09-20&type=Issues)) | @marcusianlevine ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Amarcusianlevine+updated%3A2020-08-28..2024-09-20&type=Issues)) | @marty90 ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Amarty90+updated%3A2020-08-28..2024-09-20&type=Issues)) | @minrk ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Aminrk+updated%3A2020-08-28..2024-09-20&type=Issues)) | @Nikolai-Hlubek ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3ANikolai-Hlubek+updated%3A2020-08-28..2024-09-20&type=Issues)) | @nylocx ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Anylocx+updated%3A2020-08-28..2024-09-20&type=Issues)) | @ordlucas ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Aordlucas+updated%3A2020-08-28..2024-09-20&type=Issues)) | @Ownercz ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3AOwnercz+updated%3A2020-08-28..2024-09-20&type=Issues)) | @reinierpost ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Areinierpost+updated%3A2020-08-28..2024-09-20&type=Issues)) | @sebastian-luna-valero ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Asebastian-luna-valero+updated%3A2020-08-28..2024-09-20&type=Issues)) | @sgibson91 ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Asgibson91+updated%3A2020-08-28..2024-09-20&type=Issues)) | @wiltonsr ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Awiltonsr+updated%3A2020-08-28..2024-09-20&type=Issues)) | @wsuzume ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Awsuzume+updated%3A2020-08-28..2024-09-20&type=Issues)) | @ygean ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Aygean+updated%3A2020-08-28..2024-09-20&type=Issues)) | @yuvipanda ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Ayuvipanda+updated%3A2020-08-28..2024-09-20&type=Issues))
+
 ## 1.3
 
 ### 1.3.2 - 2020-08-28
