@@ -270,7 +270,7 @@ class LDAPAuthenticator(Authenticator):
         default_value=None,
         allow_none=True,
         help="""
-        Attribute containing user's name needed for  building DN string, if `lookup_dn` is set to True.
+        Attribute containing user's name needed for building DN string, if `lookup_dn` is set to True.
 
         See `user_search_base` for info on how this attribute is used.
 
@@ -329,8 +329,9 @@ class LDAPAuthenticator(Authenticator):
 
     def resolve_username(self, username_supplied_by_user):
         """
-        Resolves a username supplied by a user to the a user DN when lookup_dn
-        is True.
+        Resolves a username (that could be used to construct a DN through a
+        template), and a DN, based on a username supplied by a user via a login
+        prompt in JupyterHub.
         """
         conn = self.get_connection(
             userdn=self.lookup_dn_search_user,
@@ -359,29 +360,42 @@ class LDAPAuthenticator(Authenticator):
             attributes=[self.lookup_dn_user_dn_attribute],
         )
         response = conn.response
-        if len(response) == 0 or "attributes" not in response[0].keys():
+        if len(response) == 0:
             self.log.warning(
-                f"No entry found for user '{username_supplied_by_user}' "
-                f"when looking up attribute '{self.user_attribute}'"
+                f"Failed to lookup a DN for username '{username_supplied_by_user}'"
+            )
+            return (None, None)
+        if len(response) > 1:
+            self.log.warning(
+                f"Failed to lookup a unique DN for username '{username_supplied_by_user}'"
+            )
+            # FIXME: Decide on failing authentication if we don't acquire a
+            #        unique DN. It seems reasonable but hasn't been done
+            #        historically, so it could be a breaking change to fix it.
+            # return (None, None)
+        if "attributes" not in response[0].keys():
+            self.log.warning(
+                f"Failed to lookup attribute '{self.user_attribute}' for username '{username_supplied_by_user}'"
             )
             return (None, None)
 
-        user_dn = response[0]["attributes"][self.lookup_dn_user_dn_attribute]
-        if isinstance(user_dn, list):
-            if len(user_dn) == 0:
+        userdn = response[0]["dn"]
+        username = response[0]["attributes"][self.lookup_dn_user_dn_attribute]
+        if isinstance(username, list):
+            if len(username) == 0:
                 return (None, None)
-            elif len(user_dn) == 1:
-                user_dn = user_dn[0]
+            elif len(username) == 1:
+                username = username[0]
             else:
                 self.log.warning(
                     f"A lookup of the username '{username_supplied_by_user}' returned a list "
                     f"of entries for the attribute '{self.lookup_dn_user_dn_attribute}'. Only "
-                    f"the first among these ('{user_dn[0]}') was used. The other entries "
-                    f"({', '.join(user_dn[1:])}) were ignored."
+                    f"the first among these ('{username[0]}') was used. The other entries "
+                    f"({', '.join(username[1:])}) were ignored."
                 )
-                user_dn = user_dn[0]
+                username = username[0]
 
-        return (user_dn, response[0]["dn"])
+        return (username, userdn)
 
     def get_connection(self, userdn, password):
         """
