@@ -5,6 +5,9 @@ Testing data is hardcoded in docker-test-openldap, described at
 https://github.com/rroemhild/docker-test-openldap?tab=readme-ov-file#ldap-structure
 """
 
+import pytest
+from ldap3.core.exceptions import LDAPSSLConfigurationError
+
 from ..ldapauthenticator import TlsStrategy
 
 
@@ -188,3 +191,17 @@ async def test_ldap_auth_state_attributes2(authenticator):
     )
     assert authorized["name"] == "leela"
     assert authorized["auth_state"]["user_attributes"] == {"description": ["Mutant"]}
+
+
+async def test_ldap_tls_kwargs_config_passthrough(authenticator):
+    """
+    This test is just meant to verify that tls_kwargs is passed through to the
+    ldap3 Tls object when its constructed.
+    """
+    authenticator.tls_kwargs = {
+        "ca_certs_file": "does-not-exist-so-error-expected",
+    }
+    with pytest.raises(LDAPSSLConfigurationError):
+        await authenticator.get_authenticated_user(
+            None, {"username": "leela", "password": "leela"}
+        )

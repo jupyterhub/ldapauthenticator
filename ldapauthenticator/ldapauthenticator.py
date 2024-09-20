@@ -5,9 +5,10 @@ from inspect import isawaitable
 import ldap3
 from jupyterhub.auth import Authenticator
 from ldap3.core.exceptions import LDAPBindError
+from ldap3.core.tls import Tls
 from ldap3.utils.conv import escape_filter_chars
 from ldap3.utils.dn import escape_rdn
-from traitlets import Bool, Int, List, Unicode, Union, UseEnum, observe, validate
+from traitlets import Bool, Dict, Int, List, Unicode, Union, UseEnum, observe, validate
 
 
 class TlsStrategy(enum.Enum):
@@ -91,6 +92,29 @@ class LDAPAuthenticator(Authenticator):
 
         When configuring `tls_strategy="on_connect"`, the default value of
         `server_port` becomes 636.
+        """,
+    )
+
+    tls_kwargs = Dict(
+        config=True,
+        help="""
+        A dictionary that will be used as keyword arguments for the constructor
+        of the ldap3 package's Tls object, influencing encrypted connections to
+        the LDAP server.
+
+        For details on what can be configured and its effects, refer to the
+        ldap3 package's documentation and code:
+
+        - ldap3 documentation: https://ldap3.readthedocs.io/en/latest/ssltls.html#the-tls-object
+        - ldap3 code: https://github.com/cannatag/ldap3/blob/v2.9.1/ldap3/core/tls.py#L59-L82
+
+        You can for example configure this like:
+
+        ```python
+        c.LDAPAuthenticator.tls_kwargs = {
+            "ca_certs_file": "file/path.here",
+        }
+        ```
         """,
     )
 
@@ -426,10 +450,12 @@ class LDAPAuthenticator(Authenticator):
             use_ssl = False
             auto_bind = ldap3.AUTO_BIND_NO_TLS
 
+        tls = Tls(**self.tls_kwargs)
         server = ldap3.Server(
             self.server_address,
             port=self.server_port,
             use_ssl=use_ssl,
+            tls=tls,
         )
         try:
             self.log.debug(f"Attempting to bind {userdn}")
