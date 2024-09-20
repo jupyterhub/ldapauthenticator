@@ -5,6 +5,7 @@ Testing data is hardcoded in docker-test-openldap, described at
 https://github.com/rroemhild/docker-test-openldap?tab=readme-ov-file#ldap-structure
 """
 
+import pytest
 from ldap3.core.exceptions import LDAPSSLConfigurationError
 
 from ..ldapauthenticator import TlsStrategy
@@ -200,13 +201,7 @@ async def test_ldap_tls_kwargs_config_passthrough(authenticator):
     authenticator.tls_kwargs = {
         "ca_certs_file": "does-not-exist-so-error-expected",
     }
-    try:
+    with pytest.raises(LDAPSSLConfigurationError):
         await authenticator.get_authenticated_user(
             None, {"username": "leela", "password": "leela"}
-        )
-    except LDAPSSLConfigurationError:
-        pass
-    else:
-        raise ValueError(
-            "Expected configuring tls_kwargs.ca_certs_file to a non-existing file to raise an error"
         )
