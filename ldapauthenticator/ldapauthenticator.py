@@ -500,21 +500,23 @@ class LDAPAuthenticator(Authenticator):
 
         ref: https://jupyterhub.readthedocs.io/en/latest/reference/authenticators.html#authenticator-authenticate
         """
-        username = data["username"]
+        login_username = data["username"]
         password = data["password"]
 
         # Protect against invalid usernames as well as LDAP injection attacks
-        if not re.match(self.valid_username_regex, username):
+        if not re.match(self.valid_username_regex, login_username):
             self.log.warning(
                 "username:%s Illegal characters in username, must match regex %s",
-                username,
+                login_username,
                 self.valid_username_regex,
             )
             return None
 
         # No empty passwords!
         if password is None or password.strip() == "":
-            self.log.warning("username:%s Login denied for blank password", username)
+            self.log.warning(
+                "username:%s Login denied for blank password", login_username
+            )
             return None
 
         # sanity check
@@ -525,9 +527,10 @@ class LDAPAuthenticator(Authenticator):
             return None
 
         bind_dn_template = self.bind_dn_template
+        resolved_username = login_username
         if self.lookup_dn:
-            username, resolved_dn = self.resolve_username(username)
-            if not username:
+            resolved_username, resolved_dn = self.resolve_username(login_username)
+            if not resolved_dn:
                 return None
             if not bind_dn_template:
                 bind_dn_template = [resolved_dn]
@@ -537,12 +540,21 @@ class LDAPAuthenticator(Authenticator):
         for dn in bind_dn_template:
             # DN's attribute values should be escaped with escape_rdn to respect
             # https://datatracker.ietf.org/doc/html/rfc4514#section-2.4
-            userdn = dn.format(username=escape_rdn(username))
+            userdn = dn.format(username=escape_rdn(resolved_username))
             conn = self.get_connection(userdn, password)
             if conn:
                 break
         if not conn:
-            self.log.warning(f"Failed to bind user '{username}' to an LDAP user.")
+            if login_username == resolved_username:
+                self.log.warning(
+                    f"Failed to bind user '{login_username}' to an LDAP user."
+                )
+            else:
+                self.log.warning(
+                    f"Failed to bind login username '{login_username}', "
+                    f"with looked up user attribute value '{resolved_username}', "
+                    "to an LDAP user."
+                )
             return None
 
         if self.search_filter:
@@ -551,7 +563,7 @@ class LDAPAuthenticator(Authenticator):
                 search_scope=ldap3.SUBTREE,
                 search_filter=self.search_filter.format(
                     userattr=self.user_attribute,
-                    username=escape_filter_chars(username),
+                    username=escape_filter_chars(resolved_username),
                 ),
                 attributes=self.attributes,
             )
@@ -559,14 +571,14 @@ class LDAPAuthenticator(Authenticator):
             if n_users == 0:
                 self.log.warning(
                     "Configured search_filter found no user associated with "
-                    f"userattr='{self.user_attribute}' and username='{username}'"
+                    f"userattr='{self.user_attribute}' and username='{resolved_username}'"
                 )
                 return None
             if n_users > 1:
                 self.log.warning(
                     "Configured search_filter found multiple users associated with "
-                    f"userattr='{self.user_attribute}' and username='{username}', a "
-                    "unique match is required."
+                    f"userattr='{self.user_attribute}' and username='{resolved_username}', "
+                    "a unique match is required."
                 )
                 return None
 
@@ -577,14 +589,14 @@ class LDAPAuthenticator(Authenticator):
                     "Missing group_search_filter or group_attributes. Both are required."
                 )
                 return None
-            self.log.debug("username:%s Using dn %s", username, userdn)
+            self.log.debug("username:%s Using dn %s", resolved_username, userdn)
             for group in self.allowed_groups:
                 found = conn.search(
                     search_base=group,
                     search_scope=ldap3.BASE,
                     search_filter=self.group_search_filter.format(
                         userdn=escape_filter_chars(userdn),
-                        uid=escape_filter_chars(username),
+                        uid=escape_filter_chars(resolved_username),
                     ),
                     attributes=self.group_attributes,
                 )
@@ -596,15 +608,14 @@ class LDAPAuthenticator(Authenticator):
                     # we should keep fetching membership
                     break
 
-        if not self.use_lookup_dn_username:
-            username = data["username"]
-
         user_attributes = self.get_user_attributes(conn, userdn)
+        self.log.debug("username:%s attributes:%s", login_username, user_attributes)
+
+        username = resolved_username if self.use_lookup_dn_username else login_username
         auth_state = {
             "ldap_groups": ldap_groups,
             "user_attributes": user_attributes,
         }
-        self.log.debug("username:%s attributes:%s", username, user_attributes)
         return {"name": username, "auth_state": auth_state}
 
     async def check_allowed(self, username, auth_model):
