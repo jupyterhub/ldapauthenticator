@@ -278,7 +278,9 @@ done.
 
 #### `LDAPAuthenticator.lookup_dn_user_dn_attribute`
 
-Attribute containing user's name needed for building DN string, if `lookup_dn` is set to True.
+Only used with `lookup_dn=True`.
+
+Attribute containing user's name needed for building DN string.
 See `user_search_base` for info on how this attribute is used.
 For most LDAP servers, this is username. For Active Directory, it is cn.
 

@@ -314,11 +314,11 @@ class LDAPAuthenticator(Authenticator):
         default_value=None,
         allow_none=True,
         help="""
-        Attribute containing user's name needed for building DN string, if `lookup_dn` is set to True.
+        Only used with `lookup_dn=True`.
 
-        See `user_search_base` for info on how this attribute is used.
-
-        For most LDAP servers, this is username.  For Active Directory, it is cn.
+        Attribute containing user's name needed for building DN string. See
+        `user_search_base` for info on how this attribute is used. For most LDAP
+        servers, this is username. For Active Directory, it is cn.
         """,
     )
 
