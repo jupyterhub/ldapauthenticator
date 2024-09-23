@@ -219,11 +219,29 @@ otherwise.
 
 #### `LDAPAuthenticator.user_search_base`
 
-Only used with `lookup_dn=True`. Defines the search base for looking up users
-in the directory.
+Only used with `lookup_dn=True` or with a configured `search_filter`.
+
+Defines the search base for looking up users in the directory.
 
 ```python
 c.LDAPAuthenticator.user_search_base = 'ou=People,dc=example,dc=com'
+```
+
+LDAPAuthenticator will search all objects matching under this base where
+the `user_attribute` is set to the current username to form the userdn.
+
+For example, if all users objects existed under the base
+`ou=people,dc=wikimedia,dc=org`, and the username users use is set with
+the attribute `uid`, you can use the following config:
+
+```python
+c.LDAPAuthenticator.lookup_dn = True
+c.LDAPAuthenticator.lookup_dn_search_filter = '({login_attr}={login})'
+c.LDAPAuthenticator.lookup_dn_search_user = 'ldap_search_user_technical_account'
+c.LDAPAuthenticator.lookup_dn_search_password = 'secret'
+c.LDAPAuthenticator.user_search_base = 'ou=people,dc=wikimedia,dc=org'
+c.LDAPAuthenticator.user_attribute = 'uid'
+c.LDAPAuthenticator.lookup_dn_user_dn_attribute = 'cn'
 ```
 
 #### `LDAPAuthenticator.user_attribute`
