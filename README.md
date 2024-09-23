@@ -291,9 +291,11 @@ If found, these will be available as `auth_state["user_attributes"]`.
 
 #### `LDAPAuthenticator.use_lookup_dn_username`
 
-If set to True (the default) the username used to build the DN string is returned as the username when `lookup_dn` is True.
+Only used with `lookup_dn=True`.
 
-When authenticating on a Linux machine against an AD server this might return something different from the supplied UNIX username. In this case setting this option to False might be a solution.
+If configured True (default value), the `lookup_dn_user_dn_attribute`
+value used to build the LDAP user's DN string is also used as the
+authenticated user's JuptyerHub username.
 
 #### `LDAPAuthenticator.search_filter`
 

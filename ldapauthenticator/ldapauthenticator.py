@@ -376,9 +376,11 @@ class LDAPAuthenticator(Authenticator):
         True,
         config=True,
         help="""
-        If set to true uses the `lookup_dn_user_dn_attribute` attribute as username instead of the supplied one.
+        Only used with `lookup_dn=True`.
 
-        This can be useful in an heterogeneous environment, when supplying a UNIX username to authenticate against AD.
+        If configured True (default value), the `lookup_dn_user_dn_attribute`
+        value used to build the LDAP user's DN string is also used as the
+        authenticated user's JuptyerHub username.
         """,
     )
 
