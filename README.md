@@ -246,8 +246,10 @@ c.LDAPAuthenticator.lookup_dn_user_dn_attribute = 'cn'
 
 #### `LDAPAuthenticator.user_attribute`
 
-Only used with `lookup_dn=True`. Defines the attribute that stores a user's
-username in your directory.
+Only used with `lookup_dn=True` or with a configured `search_filter`.
+
+Together with `user_search_base`, this attribute will be searched to
+contain the username provided by the user in JupyterHub's login form.
 
 ```python
 # Active Directory

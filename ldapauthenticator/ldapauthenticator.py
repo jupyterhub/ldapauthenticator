@@ -256,12 +256,18 @@ class LDAPAuthenticator(Authenticator):
         default_value=None,
         allow_none=True,
         help="""
-        Attribute containing user's name, if `lookup_dn` is set to True.
+        Only used with `lookup_dn=True` or with a configured `search_filter`.
 
-        See `user_search_base` for info on how this attribute is used.
+        Together with `user_search_base`, this attribute will be searched to
+        contain the username provided by the user in JupyterHub's login form.
 
-        For most LDAP servers, this is uid.  For Active Directory, it is
-        sAMAccountName.
+        ```python
+        # Active Directory
+        c.LDAPAuthenticator.user_attribute = 'sAMAccountName'
+
+        # OpenLDAP
+        c.LDAPAuthenticator.user_attribute = 'uid'
+        ```
         """,
     )
 
