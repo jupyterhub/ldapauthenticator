@@ -407,7 +407,7 @@ class LDAPAuthenticator(Authenticator):
             return (None, None)
         if "attributes" not in response[0].keys():
             self.log.warning(
-                f"Failed to lookup attribute '{self.user_attribute}' for username '{username_supplied_by_user}'"
+                f"Failed to lookup attribute '{self.lookup_dn_user_dn_attribute}' for username '{username_supplied_by_user}'"
             )
             return (None, None)
 
