@@ -155,6 +155,14 @@ class LDAPAuthenticator(Authenticator):
             rv = [e for e in rv if e]
         return rv
 
+    @observe("lookup_dn", "bind_dn_template")
+    def _require_either_lookup_dn_or_bind_dn_template(self, change):
+        if not self.lookup_dn and not self.bind_dn_template:
+            raise ValueError(
+                "LDAPAuthenticator requires either lookup_dn or "
+                "bind_dn_template to be configured"
+            )
+
     allowed_groups = List(
         config=True,
         allow_none=True,
@@ -191,6 +199,16 @@ class LDAPAuthenticator(Authenticator):
         default_value=["member", "uniqueMember", "memberUid"],
         help="List of attributes to be searched",
     )
+
+    @observe("allowed_groups", "group_search_filter", "group_attributes")
+    def _ensure_allowed_groups_requirements(self, change):
+        if not self.allowed_groups:
+            return
+        if not self.group_search_filter or not self.group_attributes:
+            raise ValueError(
+                "LDAPAuthenticator.allowed_groups requires both "
+                "group_search_filter and group_attributes to be configured"
+            )
 
     valid_username_regex = Unicode(
         r"^[a-z][.a-z0-9_-]*$",
@@ -541,13 +559,6 @@ class LDAPAuthenticator(Authenticator):
             )
             return None
 
-        # sanity check
-        if not self.lookup_dn and not self.bind_dn_template:
-            self.log.warning(
-                "Login not allowed, please configure 'lookup_dn' or 'bind_dn_template'."
-            )
-            return None
-
         bind_dn_template = self.bind_dn_template
         resolved_username = login_username
         if self.lookup_dn:
@@ -606,11 +617,6 @@ class LDAPAuthenticator(Authenticator):
 
         ldap_groups = []
         if self.allowed_groups:
-            if not self.group_search_filter or not self.group_attributes:
-                self.log.warning(
-                    "Missing group_search_filter or group_attributes. Both are required."
-                )
-                return None
             self.log.debug("username:%s Using dn %s", resolved_username, userdn)
             for group in self.allowed_groups:
                 found = conn.search(
