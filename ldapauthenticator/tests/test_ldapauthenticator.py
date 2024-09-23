@@ -8,10 +8,11 @@ https://github.com/rroemhild/docker-test-openldap?tab=readme-ov-file#ldap-struct
 import pytest
 from ldap3.core.exceptions import LDAPSSLConfigurationError
 
-from ..ldapauthenticator import TlsStrategy
+from ..ldapauthenticator import LDAPAuthenticator, TlsStrategy
 
 
-async def test_ldap_auth_allowed(authenticator):
+async def test_ldap_auth_allowed(c):
+    authenticator = LDAPAuthenticator(config=c)
     # proper username and password in allowed group
     authorized = await authenticator.get_authenticated_user(
         None, {"username": "fry", "password": "fry"}
@@ -19,7 +20,8 @@ async def test_ldap_auth_allowed(authenticator):
     assert authorized["name"] == "fry"
 
 
-async def test_ldap_auth_disallowed(authenticator):
+async def test_ldap_auth_disallowed(c):
+    authenticator = LDAPAuthenticator(config=c)
     # invalid username
     authorized = await authenticator.get_authenticated_user(
         None, {"username": "3fry/", "password": "raw"}
@@ -51,8 +53,12 @@ async def test_ldap_auth_disallowed(authenticator):
     assert authorized is None
 
 
-async def test_ldap_auth_blank_template(authenticator):
-    authenticator.bind_dn_template = [authenticator.bind_dn_template, ""]
+async def test_ldap_auth_blank_template(c):
+    c.LDAPAuthenticator.bind_dn_template = [
+        "cn={username},ou=people,dc=planetexpress,dc=com",
+        "",
+    ]
+    authenticator = LDAPAuthenticator(config=c)
 
     # proper username and password in allowed group
     authorized = await authenticator.get_authenticated_user(
@@ -61,7 +67,8 @@ async def test_ldap_auth_blank_template(authenticator):
     assert authorized["name"] == "fry"
 
 
-async def test_ldap_use_ssl_deprecation(authenticator):
+async def test_ldap_use_ssl_deprecation(c):
+    authenticator = LDAPAuthenticator(config=c)
     assert authenticator.tls_strategy == TlsStrategy.before_bind
 
     # setting use_ssl to True should result in tls_strategy being set to
@@ -70,12 +77,13 @@ async def test_ldap_use_ssl_deprecation(authenticator):
     assert authenticator.tls_strategy == TlsStrategy.on_connect
 
 
-async def test_ldap_auth_tls_strategy_on_connect(authenticator):
+async def test_ldap_auth_tls_strategy_on_connect(c):
     """
     Verifies basic function of the authenticator with a given tls_strategy
     without actually confirming use of that strategy.
     """
-    authenticator.tls_strategy = "on_connect"
+    c.LDAPAuthenticator.tls_strategy = "on_connect"
+    authenticator = LDAPAuthenticator(config=c)
 
     # proper username and password in allowed group
     authorized = await authenticator.get_authenticated_user(
@@ -84,12 +92,13 @@ async def test_ldap_auth_tls_strategy_on_connect(authenticator):
     assert authorized["name"] == "fry"
 
 
-async def test_ldap_auth_tls_strategy_insecure(authenticator):
+async def test_ldap_auth_tls_strategy_insecure(c):
     """
     Verifies basic function of the authenticator with a given tls_strategy
     without actually confirming use of that strategy.
     """
-    authenticator.tls_strategy = "insecure"
+    c.LDAPAuthenticator.tls_strategy = "insecure"
+    authenticator = LDAPAuthenticator(config=c)
 
     # proper username and password in allowed group
     authorized = await authenticator.get_authenticated_user(
@@ -98,8 +107,9 @@ async def test_ldap_auth_tls_strategy_insecure(authenticator):
     assert authorized["name"] == "fry"
 
 
-async def test_ldap_auth_use_lookup_dn(authenticator):
-    authenticator.use_lookup_dn_username = True
+async def test_ldap_auth_use_lookup_dn(c):
+    c.LDAPAuthenticator.use_lookup_dn_username = True
+    authenticator = LDAPAuthenticator(config=c)
 
     # proper username and password in allowed group
     authorized = await authenticator.get_authenticated_user(
@@ -108,12 +118,13 @@ async def test_ldap_auth_use_lookup_dn(authenticator):
     assert authorized["name"] == "philip j. fry"
 
 
-async def test_ldap_auth_search_filter(authenticator):
-    authenticator.allowed_groups = []
-    authenticator.allow_all = True
-    authenticator.search_filter = (
+async def test_ldap_auth_search_filter(c):
+    c.LDAPAuthenticator.allowed_groups = []
+    c.LDAPAuthenticator.allow_all = True
+    c.LDAPAuthenticator.search_filter = (
         "(&(objectClass=inetOrgPerson)(ou=	Delivering Crew)(cn={username}))"
     )
+    authenticator = LDAPAuthenticator(config=c)
 
     # proper username and password in allowed group
     authorized = await authenticator.get_authenticated_user(
@@ -129,12 +140,16 @@ async def test_ldap_auth_search_filter(authenticator):
     assert authorized is None
 
 
-async def test_allow_config(authenticator):
-    # test various sources of allow config
-
+async def test_allow_config(c):
+    """
+    test various sources of allow config
+    """
     # this group allows fry, leela, bender
-    authenticator.allowed_groups = ["cn=ship_crew,ou=people,dc=planetexpress,dc=com"]
-    authenticator.allowed_users = {"zoidberg"}
+    c.LDAPAuthenticator.allowed_groups = [
+        "cn=ship_crew,ou=people,dc=planetexpress,dc=com"
+    ]
+    c.LDAPAuthenticator.allowed_users = {"zoidberg"}
+    authenticator = LDAPAuthenticator(config=c)
 
     # in allowed_groups
     authorized = await authenticator.get_authenticated_user(
@@ -169,8 +184,10 @@ async def test_allow_config(authenticator):
     assert authorized["name"] == "professor"
 
 
-async def test_ldap_auth_state_attributes(authenticator):
-    authenticator.auth_state_attributes = ["employeeType"]
+async def test_ldap_auth_state_attributes(c):
+    c.LDAPAuthenticator.auth_state_attributes = ["employeeType"]
+    authenticator = LDAPAuthenticator(config=c)
+
     # proper username and password in allowed group
     authorized = await authenticator.get_authenticated_user(
         None, {"username": "fry", "password": "fry"}
@@ -181,10 +198,12 @@ async def test_ldap_auth_state_attributes(authenticator):
     }
 
 
-async def test_ldap_auth_state_attributes2(authenticator):
-    authenticator.group_search_filter = "(cn=ship_crew)"
-    authenticator.group_attributes = ["cn"]
-    authenticator.auth_state_attributes = ["description"]
+async def test_ldap_auth_state_attributes2(c):
+    c.LDAPAuthenticator.group_search_filter = "(cn=ship_crew)"
+    c.LDAPAuthenticator.group_attributes = ["cn"]
+    c.LDAPAuthenticator.auth_state_attributes = ["description"]
+    authenticator = LDAPAuthenticator(config=c)
+
     # proper username and password in allowed group
     authorized = await authenticator.get_authenticated_user(
         None, {"username": "leela", "password": "leela"}
@@ -193,14 +212,16 @@ async def test_ldap_auth_state_attributes2(authenticator):
     assert authorized["auth_state"]["user_attributes"] == {"description": ["Mutant"]}
 
 
-async def test_ldap_tls_kwargs_config_passthrough(authenticator):
+async def test_ldap_tls_kwargs_config_passthrough(c):
     """
     This test is just meant to verify that tls_kwargs is passed through to the
     ldap3 Tls object when its constructed.
     """
-    authenticator.tls_kwargs = {
+    c.LDAPAuthenticator.tls_kwargs = {
         "ca_certs_file": "does-not-exist-so-error-expected",
     }
+    authenticator = LDAPAuthenticator(config=c)
+
     with pytest.raises(LDAPSSLConfigurationError):
         await authenticator.get_authenticated_user(
             None, {"username": "leela", "password": "leela"}
