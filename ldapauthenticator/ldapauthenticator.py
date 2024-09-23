@@ -200,6 +200,16 @@ class LDAPAuthenticator(Authenticator):
         help="List of attributes to be searched",
     )
 
+    @observe("allowed_groups", "group_search_filter", "group_attributes")
+    def _ensure_allowed_groups_requirements(self, change):
+        if not self.allowed_groups:
+            return
+        if not self.group_search_filter or not self.group_attributes:
+            raise ValueError(
+                "LDAPAuthenticator.allowed_groups requires both "
+                "group_search_filter and group_attributes to be configured"
+            )
+
     valid_username_regex = Unicode(
         r"^[a-z][.a-z0-9_-]*$",
         config=True,
@@ -607,11 +617,6 @@ class LDAPAuthenticator(Authenticator):
 
         ldap_groups = []
         if self.allowed_groups:
-            if not self.group_search_filter or not self.group_attributes:
-                self.log.warning(
-                    "Missing group_search_filter or group_attributes. Both are required."
-                )
-                return None
             self.log.debug("username:%s Using dn %s", resolved_username, userdn)
             for group in self.allowed_groups:
                 found = conn.search(
