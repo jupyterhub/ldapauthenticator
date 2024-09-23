@@ -224,15 +224,22 @@ class LDAPAuthenticator(Authenticator):
         default_value=None,
         allow_none=True,
         help="""
-        Base for looking up user accounts in the directory, if `lookup_dn` is set to True.
+        Only used with `lookup_dn=True` or with a configured `search_filter`.
 
-        LDAPAuthenticator will search all objects matching under this base where the `user_attribute`
-        is set to the current username to form the userdn.
+        Defines the search base for looking up users in the directory.
 
-        For example, if all users objects existed under the base ou=people,dc=wikimedia,dc=org, and
-        the username users use is set with the attribute `uid`, you can use the following config:
-
+        ```python
+        c.LDAPAuthenticator.user_search_base = 'ou=People,dc=example,dc=com'
         ```
+
+        LDAPAuthenticator will search all objects matching under this base where
+        the `user_attribute` is set to the current username to form the userdn.
+
+        For example, if all users objects existed under the base
+        `ou=people,dc=wikimedia,dc=org`, and the username users use is set with
+        the attribute `uid`, you can use the following config:
+
+        ```python
         c.LDAPAuthenticator.lookup_dn = True
         c.LDAPAuthenticator.lookup_dn_search_filter = '({login_attr}={login})'
         c.LDAPAuthenticator.lookup_dn_search_user = 'ldap_search_user_technical_account'
@@ -240,7 +247,6 @@ class LDAPAuthenticator(Authenticator):
         c.LDAPAuthenticator.user_search_base = 'ou=people,dc=wikimedia,dc=org'
         c.LDAPAuthenticator.user_attribute = 'uid'
         c.LDAPAuthenticator.lookup_dn_user_dn_attribute = 'cn'
-        c.LDAPAuthenticator.bind_dn_template = '{username}'
         ```
         """,
     )
@@ -250,12 +256,18 @@ class LDAPAuthenticator(Authenticator):
         default_value=None,
         allow_none=True,
         help="""
-        Attribute containing user's name, if `lookup_dn` is set to True.
+        Only used with `lookup_dn=True` or with a configured `search_filter`.
 
-        See `user_search_base` for info on how this attribute is used.
+        Together with `user_search_base`, this attribute will be searched to
+        contain the username provided by the user in JupyterHub's login form.
 
-        For most LDAP servers, this is uid.  For Active Directory, it is
-        sAMAccountName.
+        ```python
+        # Active Directory
+        c.LDAPAuthenticator.user_attribute = 'sAMAccountName'
+
+        # OpenLDAP
+        c.LDAPAuthenticator.user_attribute = 'uid'
+        ```
         """,
     )
 
@@ -264,7 +276,12 @@ class LDAPAuthenticator(Authenticator):
         default_value="({login_attr}={login})",
         allow_none=True,
         help="""
-        How to query LDAP for user name lookup, if `lookup_dn` is set to True.
+        Only used with `lookup_dn=True`.
+
+        How to query LDAP for user name lookup.
+
+        Default value `'({login_attr}={login})'` should be good enough for most
+        use cases.
         """,
     )
 
@@ -273,10 +290,11 @@ class LDAPAuthenticator(Authenticator):
         default_value=None,
         allow_none=True,
         help="""
-        DN for a technical user account allowed to search for information about
-        provided username, if `lookup_dn` is set to True.
+        Only used with `lookup_dn=True`.
 
-        If both lookup_dn_search_user and lookup_dn_search_password are None, then anonymous LDAP query will be done.
+        Technical account for user lookup. If both `lookup_dn_search_user` and
+        `lookup_dn_search_password` are None, then anonymous LDAP query will be
+        done.
         """,
     )
 
@@ -285,7 +303,9 @@ class LDAPAuthenticator(Authenticator):
         default_value=None,
         allow_none=True,
         help="""
-        Technical account for user lookup, if `lookup_dn` is set to True.
+        Only used with `lookup_dn=True`.
+
+        Password for a `lookup_dn_search_user`.
         """,
     )
 
@@ -294,11 +314,11 @@ class LDAPAuthenticator(Authenticator):
         default_value=None,
         allow_none=True,
         help="""
-        Attribute containing user's name needed for building DN string, if `lookup_dn` is set to True.
+        Only used with `lookup_dn=True`.
 
-        See `user_search_base` for info on how this attribute is used.
-
-        For most LDAP servers, this is username.  For Active Directory, it is cn.
+        Attribute containing user's name needed for building DN string. See
+        `user_search_base` for info on how this attribute is used. For most LDAP
+        servers, this is username. For Active Directory, it is cn.
         """,
     )
 
@@ -356,9 +376,11 @@ class LDAPAuthenticator(Authenticator):
         True,
         config=True,
         help="""
-        If set to true uses the `lookup_dn_user_dn_attribute` attribute as username instead of the supplied one.
+        Only used with `lookup_dn=True`.
 
-        This can be useful in an heterogeneous environment, when supplying a UNIX username to authenticate against AD.
+        If configured True (default value), the `lookup_dn_user_dn_attribute`
+        value used to build the LDAP user's DN string is also used as the
+        authenticated user's JuptyerHub username.
         """,
     )
 

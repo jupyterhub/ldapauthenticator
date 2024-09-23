@@ -219,17 +219,37 @@ otherwise.
 
 #### `LDAPAuthenticator.user_search_base`
 
-Only used with `lookup_dn=True`. Defines the search base for looking up users
-in the directory.
+Only used with `lookup_dn=True` or with a configured `search_filter`.
+
+Defines the search base for looking up users in the directory.
 
 ```python
 c.LDAPAuthenticator.user_search_base = 'ou=People,dc=example,dc=com'
 ```
 
+LDAPAuthenticator will search all objects matching under this base where
+the `user_attribute` is set to the current username to form the userdn.
+
+For example, if all users objects existed under the base
+`ou=people,dc=wikimedia,dc=org`, and the username users use is set with
+the attribute `uid`, you can use the following config:
+
+```python
+c.LDAPAuthenticator.lookup_dn = True
+c.LDAPAuthenticator.lookup_dn_search_filter = '({login_attr}={login})'
+c.LDAPAuthenticator.lookup_dn_search_user = 'ldap_search_user_technical_account'
+c.LDAPAuthenticator.lookup_dn_search_password = 'secret'
+c.LDAPAuthenticator.user_search_base = 'ou=people,dc=wikimedia,dc=org'
+c.LDAPAuthenticator.user_attribute = 'uid'
+c.LDAPAuthenticator.lookup_dn_user_dn_attribute = 'cn'
+```
+
 #### `LDAPAuthenticator.user_attribute`
 
-Only used with `lookup_dn=True`. Defines the attribute that stores a user's
-username in your directory.
+Only used with `lookup_dn=True` or with a configured `search_filter`.
+
+Together with `user_search_base`, this attribute will be searched to
+contain the username provided by the user in JupyterHub's login form.
 
 ```python
 # Active Directory
@@ -241,17 +261,26 @@ c.LDAPAuthenticator.user_attribute = 'uid'
 
 #### `LDAPAuthenticator.lookup_dn_search_filter`
 
-How to query LDAP for user name lookup, if `lookup_dn` is set to True.
-Default value `'({login_attr}={login})'` should be good enough for most use cases.
+Only used with `lookup_dn=True`.
+
+How to query LDAP for user name lookup.
+
+Default value `'({login_attr}={login})'` should be good enough for most
+use cases.
 
 #### `LDAPAuthenticator.lookup_dn_search_user`, `LDAPAuthenticator.lookup_dn_search_password`
 
-Technical account for user lookup, if `lookup_dn` is set to True.
-If both lookup_dn_search_user and lookup_dn_search_password are None, then anonymous LDAP query will be done.
+Only used with `lookup_dn=True`.
+
+Technical account for user lookup. If both `lookup_dn_search_user` and
+`lookup_dn_search_password` are None, then anonymous LDAP query will be
+done.
 
 #### `LDAPAuthenticator.lookup_dn_user_dn_attribute`
 
-Attribute containing user's name needed for building DN string, if `lookup_dn` is set to True.
+Only used with `lookup_dn=True`.
+
+Attribute containing user's name needed for building DN string.
 See `user_search_base` for info on how this attribute is used.
 For most LDAP servers, this is username. For Active Directory, it is cn.
 
@@ -262,9 +291,11 @@ If found, these will be available as `auth_state["user_attributes"]`.
 
 #### `LDAPAuthenticator.use_lookup_dn_username`
 
-If set to True (the default) the username used to build the DN string is returned as the username when `lookup_dn` is True.
+Only used with `lookup_dn=True`.
 
-When authenticating on a Linux machine against an AD server this might return something different from the supplied UNIX username. In this case setting this option to False might be a solution.
+If configured True (default value), the `lookup_dn_user_dn_attribute`
+value used to build the LDAP user's DN string is also used as the
+authenticated user's JuptyerHub username.
 
 #### `LDAPAuthenticator.search_filter`
 
