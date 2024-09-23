@@ -155,6 +155,14 @@ class LDAPAuthenticator(Authenticator):
             rv = [e for e in rv if e]
         return rv
 
+    @observe("lookup_dn", "bind_dn_template")
+    def _require_either_lookup_dn_or_bind_dn_template(self, change):
+        if not self.lookup_dn and not self.bind_dn_template:
+            raise ValueError(
+                "LDAPAuthenticator requires either lookup_dn or "
+                "bind_dn_template to be configured"
+            )
+
     allowed_groups = List(
         config=True,
         allow_none=True,
@@ -538,13 +546,6 @@ class LDAPAuthenticator(Authenticator):
         if password is None or password.strip() == "":
             self.log.warning(
                 "username:%s Login denied for blank password", login_username
-            )
-            return None
-
-        # sanity check
-        if not self.lookup_dn and not self.bind_dn_template:
-            self.log.warning(
-                "Login not allowed, please configure 'lookup_dn' or 'bind_dn_template'."
             )
             return None
 
