@@ -261,8 +261,12 @@ c.LDAPAuthenticator.user_attribute = 'uid'
 
 #### `LDAPAuthenticator.lookup_dn_search_filter`
 
-How to query LDAP for user name lookup, if `lookup_dn` is set to True.
-Default value `'({login_attr}={login})'` should be good enough for most use cases.
+Only used with `lookup_dn=True`.
+
+How to query LDAP for user name lookup.
+
+Default value `'({login_attr}={login})'` should be good enough for most
+use cases.
 
 #### `LDAPAuthenticator.lookup_dn_search_user`, `LDAPAuthenticator.lookup_dn_search_password`
 

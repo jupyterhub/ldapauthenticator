@@ -276,7 +276,12 @@ class LDAPAuthenticator(Authenticator):
         default_value="({login_attr}={login})",
         allow_none=True,
         help="""
-        How to query LDAP for user name lookup, if `lookup_dn` is set to True.
+        Only used with `lookup_dn=True`.
+
+        How to query LDAP for user name lookup.
+
+        Default value `'({login_attr}={login})'` should be good enough for most
+        use cases.
         """,
     )
 
