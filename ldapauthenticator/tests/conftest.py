@@ -19,7 +19,6 @@ def c():
     c.LDAPAuthenticator.user_attribute = "uid"
     c.LDAPAuthenticator.lookup_dn_user_dn_attribute = "cn"
     c.LDAPAuthenticator.attributes = ["uid", "cn", "mail", "ou"]
-    c.LDAPAuthenticator.use_lookup_dn_username = False
 
     c.LDAPAuthenticator.allowed_groups = [
         "cn=admin_staff,ou=people,dc=planetexpress,dc=com",
