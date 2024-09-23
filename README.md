@@ -270,8 +270,11 @@ use cases.
 
 #### `LDAPAuthenticator.lookup_dn_search_user`, `LDAPAuthenticator.lookup_dn_search_password`
 
-Technical account for user lookup, if `lookup_dn` is set to True.
-If both lookup_dn_search_user and lookup_dn_search_password are None, then anonymous LDAP query will be done.
+Only used with `lookup_dn=True`.
+
+Technical account for user lookup. If both `lookup_dn_search_user` and
+`lookup_dn_search_password` are None, then anonymous LDAP query will be
+done.
 
 #### `LDAPAuthenticator.lookup_dn_user_dn_attribute`
 

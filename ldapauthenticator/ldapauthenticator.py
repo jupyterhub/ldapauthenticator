@@ -290,10 +290,11 @@ class LDAPAuthenticator(Authenticator):
         default_value=None,
         allow_none=True,
         help="""
-        DN for a technical user account allowed to search for information about
-        provided username, if `lookup_dn` is set to True.
+        Only used with `lookup_dn=True`.
 
-        If both lookup_dn_search_user and lookup_dn_search_password are None, then anonymous LDAP query will be done.
+        Technical account for user lookup. If both `lookup_dn_search_user` and
+        `lookup_dn_search_password` are None, then anonymous LDAP query will be
+        done.
         """,
     )
 
@@ -302,7 +303,9 @@ class LDAPAuthenticator(Authenticator):
         default_value=None,
         allow_none=True,
         help="""
-        Technical account for user lookup, if `lookup_dn` is set to True.
+        Only used with `lookup_dn=True`.
+
+        Password for a `lookup_dn_search_user`.
         """,
     )
 
