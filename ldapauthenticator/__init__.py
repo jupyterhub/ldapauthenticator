@@ -4,3 +4,6 @@ from ldapauthenticator.ldapauthenticator import LDAPAuthenticator  # noqa
 # pyproject.toml, according to instructions in RELEASE.md.
 #
 __version__ = "2.0.0b1"
+
+# version_info looks like (1, 2, 3, "dev") if __version__ is 1.2.3.dev
+version_info = tuple(int(p) if p.isdigit() else p for p in __version__.split("."))
