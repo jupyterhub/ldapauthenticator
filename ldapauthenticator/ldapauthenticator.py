@@ -419,6 +419,13 @@ class LDAPAuthenticator(Authenticator):
             return (None, None)
 
         search_filter = self.lookup_dn_search_filter.format(
+            # A search filter matching against string literals, should
+            # have the string literals escaped with escape_filter_chars.
+            # Escaped characters are `/()*` (and null).
+            #
+            # ref: https://datatracker.ietf.org/doc/html/rfc4515#section-3
+            # ref: https://ldap3.readthedocs.io/en/latest/searches.html?highlight=escape_filter_chars
+            #
             login_attr=self.user_attribute,
             login=escape_filter_chars(username_supplied_by_user),
         )
@@ -571,8 +578,13 @@ class LDAPAuthenticator(Authenticator):
         # bind to ldap user
         conn = None
         for dn in bind_dn_template:
-            # DN's attribute values should be escaped with escape_rdn to respect
-            # https://datatracker.ietf.org/doc/html/rfc4514#section-2.4
+            # A DN represented as a string should have its attribute values
+            # escaped with escape_rdn. Escaped characters are `\,+"<>;=` (and
+            # null).
+            #
+            # ref: https://datatracker.ietf.org/doc/html/rfc4514#section-2.4.
+            # ref: https://ldap3.readthedocs.io/en/latest/connection.html?highlight=escape_rdn
+            #
             userdn = dn.format(username=escape_rdn(resolved_username))
             conn = self.get_connection(userdn, password)
             if conn:
@@ -595,6 +607,13 @@ class LDAPAuthenticator(Authenticator):
                 search_base=self.user_search_base,
                 search_scope=ldap3.SUBTREE,
                 search_filter=self.search_filter.format(
+                    # A search filter matching against string literals, should
+                    # have the string literals escaped with escape_filter_chars.
+                    # Escaped characters are `/()*` (and null).
+                    #
+                    # ref: https://datatracker.ietf.org/doc/html/rfc4515#section-3
+                    # ref: https://ldap3.readthedocs.io/en/latest/searches.html?highlight=escape_filter_chars
+                    #
                     userattr=self.user_attribute,
                     username=escape_filter_chars(resolved_username),
                 ),
@@ -623,6 +642,13 @@ class LDAPAuthenticator(Authenticator):
                     search_base=group,
                     search_scope=ldap3.BASE,
                     search_filter=self.group_search_filter.format(
+                        # A search filter matching against string literals, should
+                        # have the string literals escaped with escape_filter_chars.
+                        # Escaped characters are `/()*` (and null).
+                        #
+                        # ref: https://datatracker.ietf.org/doc/html/rfc4515#section-3
+                        # ref: https://ldap3.readthedocs.io/en/latest/searches.html?highlight=escape_filter_chars
+                        #
                         userdn=escape_filter_chars(userdn),
                         uid=escape_filter_chars(resolved_username),
                     ),
