@@ -293,9 +293,16 @@ If found, these will be available as `auth_state["user_attributes"]`.
 
 Only used with `lookup_dn=True`.
 
-If configured True (default value), the `lookup_dn_user_dn_attribute`
-value used to build the LDAP user's DN string is also used as the
-authenticated user's JuptyerHub username.
+If configured True, the `lookup_dn_user_dn_attribute` value used to
+build the LDAP user's DN string is also used as the authenticated user's
+JuptyerHub username.
+
+If this is configured True, its important to ensure that the values of
+`lookup_dn_user_dn_attribute` are unique even after the are normalized
+to be lowercase, otherwise two LDAP users could end up sharing the same
+JupyterHub username.
+
+With ldapauthenticator 2, the default value was changed to False.
 
 #### `LDAPAuthenticator.search_filter`
 
