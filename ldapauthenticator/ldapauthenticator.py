@@ -478,13 +478,12 @@ class LDAPAuthenticator(Authenticator):
             elif len(username) == 1:
                 username = username[0]
             else:
-                self.log.warning(
+                self.log.error(
                     f"A lookup of the username '{username_supplied_by_user}' returned a list "
-                    f"of entries for the attribute '{self.lookup_dn_user_dn_attribute}'. Only "
-                    f"the first among these ('{username[0]}') was used. The other entries "
-                    f"({', '.join(username[1:])}) were ignored."
+                    f"of entries for the attribute '{self.lookup_dn_user_dn_attribute}': "
+                    f"({', '.join(username)})"
                 )
-                username = username[0]
+                return None, None
 
         return (username, userdn)
 
