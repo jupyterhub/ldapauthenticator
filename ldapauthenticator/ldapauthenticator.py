@@ -266,7 +266,7 @@ class LDAPAuthenticator(Authenticator):
         c.LDAPAuthenticator.lookup_dn_search_password = 'secret'
         c.LDAPAuthenticator.user_search_base = 'ou=people,dc=wikimedia,dc=org'
         c.LDAPAuthenticator.user_attribute = 'uid'
-        c.LDAPAuthenticator.lookup_dn_user_dn_attribute = 'cn'
+        c.LDAPAuthenticator.lookup_dn_user_dn_attribute = 'sAMAccountName'
         ```
         """,
     )
@@ -338,7 +338,7 @@ class LDAPAuthenticator(Authenticator):
 
         Attribute containing user's name needed for building DN string. See
         `user_search_base` for info on how this attribute is used. For most LDAP
-        servers, this is username. For Active Directory, it is cn.
+        servers, this is username. For Active Directory, it is `sAMAccountName`.
         """,
     )
 
