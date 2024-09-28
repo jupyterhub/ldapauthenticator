@@ -667,11 +667,7 @@ class LDAPAuthenticator(Authenticator):
                 )
                 if found:
                     ldap_groups.append(group)
-                    # we currently only use this in check_allowed,
-                    # so we stop here, as only one match is relevant
-                    # if all groups are needed (e.g. for manage_groups)
-                    # we should keep fetching membership
-                    break
+                    # Returned in auth_state, so fetch the full list
 
         user_attributes = self.get_user_attributes(conn, userdn)
         self.log.debug("username:%s attributes:%s", login_username, user_attributes)
