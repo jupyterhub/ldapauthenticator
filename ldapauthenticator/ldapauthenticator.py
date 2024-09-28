@@ -64,7 +64,7 @@ class LDAPAuthenticator(Authenticator):
             self.tls_strategy = TlsStrategy.on_connect
             self.log.warning(
                 "LDAPAuthenticator.use_ssl is deprecated in 2.0 in favor of LDAPAuthenticator.tls_strategy, "
-                'instead of configuring use_ssl=True, configure use tls_strategy="on_connect" from now on.'
+                'instead of configuring use_ssl=True, configure tls_strategy="on_connect" from now on.'
             )
         else:
             self.log.warning(
@@ -99,7 +99,7 @@ class LDAPAuthenticator(Authenticator):
         config=True,
         help="""
         A dictionary that will be used as keyword arguments for the constructor
-        of the ldap3 package's Tls object, influencing encrypted connections to
+        of the ldap3 package's TLS object, influencing encrypted connections to
         the LDAP server.
 
         For details on what can be configured and its effects, refer to the
@@ -131,10 +131,10 @@ class LDAPAuthenticator(Authenticator):
         (such as uid or sAMAccountName), please see `lookup_dn`. It might
         be particularly relevant for ActiveDirectory installs.
 
-        Unicode Example:
+        String example:
             uid={username},ou=people,dc=wikimedia,dc=org
 
-        List Example:
+        List example:
             [
             	uid={username},ou=people,dc=wikimedia,dc=org,
             	uid={username},ou=Developers,dc=wikimedia,dc=org
@@ -187,7 +187,9 @@ class LDAPAuthenticator(Authenticator):
         config=True,
         default_value="(|(member={userdn})(uniqueMember={userdn})(memberUid={uid}))",
         help="""
-        The search filter used to locate groups.
+        The search filter template used to locate groups that the user belongs to.
+
+        `{userdn}` and `{uid}` will be replaced with the LDAP user's attributes.
 
         Certain server types may use different values, and may also
         reject invalid values by raising exceptions.
@@ -197,7 +199,7 @@ class LDAPAuthenticator(Authenticator):
     group_attributes = List(
         config=True,
         default_value=["member", "uniqueMember", "memberUid"],
-        help="List of attributes to be searched",
+        help="List of attributes in the LDAP group to be searched",
     )
 
     @observe("allowed_groups", "group_search_filter", "group_attributes")
@@ -250,11 +252,11 @@ class LDAPAuthenticator(Authenticator):
         c.LDAPAuthenticator.user_search_base = 'ou=People,dc=example,dc=com'
         ```
 
-        LDAPAuthenticator will search all objects matching under this base where
+        LDAPAuthenticator will search all objects under this base where
         the `user_attribute` is set to the current username to form the userdn.
 
         For example, if all users objects existed under the base
-        `ou=people,dc=wikimedia,dc=org`, and the username users use is set with
+        `ou=people,dc=wikimedia,dc=org`, the username is set with
         the attribute `uid`, you can use the following config:
 
         ```python
@@ -398,7 +400,7 @@ class LDAPAuthenticator(Authenticator):
 
         If configured True, the `lookup_dn_user_dn_attribute` value used to
         build the LDAP user's DN string is also used as the authenticated user's
-        JuptyerHub username.
+        JupyterHub username.
 
         If this is configured True, its important to ensure that the values of
         `lookup_dn_user_dn_attribute` are unique even after the are normalized
@@ -414,6 +416,9 @@ class LDAPAuthenticator(Authenticator):
         Resolves a username (that could be used to construct a DN through a
         template), and a DN, based on a username supplied by a user via a login
         prompt in JupyterHub.
+
+        Returns (username, userdn) if found, or (None, None) if an error occurred,
+        or if `username_supplied_by_user` does not correspond to a unique user.
         """
         conn = self.get_connection(
             userdn=self.lookup_dn_search_user,
