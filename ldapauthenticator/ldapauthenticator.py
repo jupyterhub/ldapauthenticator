@@ -701,7 +701,7 @@ class LDAPAuthenticator(Authenticator):
                     self.log.debug("Allowing %s as member of group %s", username, group)
                     return True
         if self.search_filter:
-            self.log.warning(
+            self.log.info(
                 "User %s matches search_filter %s, but not allowed by allowed_users, allowed_groups, or allow_all.",
                 username,
                 self.search_filter,
