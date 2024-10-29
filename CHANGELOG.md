@@ -2,7 +2,7 @@
 
 ## 2.0
 
-### 2.0.1 - YYYY-MM-DD
+### 2.0.1 - 2024-10-29
 
 ([full changelog](https://github.com/jupyterhub/ldapauthenticator/compare/2.0.0...2.0.1))
 
