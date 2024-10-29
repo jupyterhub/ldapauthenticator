@@ -150,6 +150,8 @@ class LDAPAuthenticator(Authenticator):
         rv = []
         if isinstance(proposal.value, str):
             rv = [proposal.value]
+        elif isinstance(proposal.value, list):
+            rv = proposal.value
         if "" in rv:
             self.log.warning("Ignoring blank 'bind_dn_template' entry!")
             rv = [e for e in rv if e]
