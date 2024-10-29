@@ -53,11 +53,20 @@ async def test_ldap_auth_disallowed(c):
     assert authorized is None
 
 
-async def test_ldap_auth_blank_template(c):
-    c.LDAPAuthenticator.bind_dn_template = [
+@pytest.mark.parametrize(
+    "bind_dn_template",
+    [
         "cn={username},ou=people,dc=planetexpress,dc=com",
-        "",
-    ]
+        ["cn={username},ou=people,dc=planetexpress,dc=com"],
+        [
+            "cn={username},ou=people,dc=planetexpress,dc=com",
+            "",
+        ],
+    ],
+)
+async def test_ldap_auth_bind_dn_template(c, bind_dn_template):
+    c.LDAPAuthenticator.bind_dn_template = bind_dn_template
+    c.LDAPAuthenticator.lookup_dn = False
     authenticator = LDAPAuthenticator(config=c)
 
     # proper username and password in allowed group
