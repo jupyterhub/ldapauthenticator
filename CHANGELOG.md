@@ -2,6 +2,20 @@
 
 ## 2.0
 
+### 2.0.1 - YYYY-MM-DD
+
+([full changelog](https://github.com/jupyterhub/ldapauthenticator/compare/2.0.0...2.0.1))
+
+#### Bugs fixed
+
+- fix: Ensure a list `bind_dn_template` is properly validated [#289](https://github.com/jupyterhub/ldapauthenticator/pull/289) ([@mahendrapaipuri](https://github.com/mahendrapaipuri))
+
+#### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyterhub/ldapauthenticator/graphs/contributors?from=2024-10-18&to=2024-10-29&type=c))
+
+[@mahendrapaipuri](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Amahendrapaipuri+updated%3A2024-10-18..2024-10-29&type=Issues)
+
 ### 2.0.0 - 2024-10-18
 
 ([full changelog](https://github.com/jupyterhub/ldapauthenticator/compare/1.3.2...2.0.0))
