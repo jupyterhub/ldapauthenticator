@@ -455,38 +455,41 @@ class LDAPAuthenticator(Authenticator):
             search_filter=search_filter,
             attributes=[self.lookup_dn_user_dn_attribute],
         )
-        response = conn.response
-        if len(response) == 0:
+
+        # identify unique search response entry
+        n_entries = len(conn.entries)
+        if n_entries == 0:
             self.log.warning(
                 f"Failed to lookup a DN for username '{username_supplied_by_user}'"
             )
             return (None, None)
-        if len(response) > 1:
+        if n_entries > 1:
             self.log.warning(
                 f"Failed to lookup a unique DN for username '{username_supplied_by_user}'"
             )
             return (None, None)
-        if "attributes" not in response[0].keys():
+        entry = conn.entries[0]
+
+        # identify unique attribute value within the entry
+        attribute_values = entry.entry_attributes_as_dict.get(
+            self.lookup_dn_user_dn_attribute
+        )
+        if not attribute_values:
             self.log.warning(
-                f"Failed to lookup attribute '{self.lookup_dn_user_dn_attribute}' for username '{username_supplied_by_user}'"
+                f"Failed to lookup attribute '{self.lookup_dn_user_dn_attribute}' "
+                f"for username '{username_supplied_by_user}'"
             )
             return (None, None)
+        if len(attribute_values) > 1:
+            self.log.error(
+                f"A lookup of the username '{username_supplied_by_user}' returned multiple "
+                f"values for the attribute '{self.lookup_dn_user_dn_attribute}': "
+                f"({', '.join(attribute_values)})"
+            )
+            return None, None
 
-        userdn = response[0]["dn"]
-        username = response[0]["attributes"][self.lookup_dn_user_dn_attribute]
-        if isinstance(username, list):
-            if len(username) == 0:
-                return (None, None)
-            elif len(username) == 1:
-                username = username[0]
-            else:
-                self.log.error(
-                    f"A lookup of the username '{username_supplied_by_user}' returned a list "
-                    f"of entries for the attribute '{self.lookup_dn_user_dn_attribute}': "
-                    f"({', '.join(username)})"
-                )
-                return None, None
-
+        userdn = entry.entry_dn
+        username = attribute_values[0]
         return (username, userdn)
 
     def get_connection(self, userdn, password):
@@ -547,6 +550,9 @@ class LDAPAuthenticator(Authenticator):
                 search_filter="(objectClass=*)",
                 attributes=self.auth_state_attributes,
             )
+            # FIXME: Handle situations with multiple entries below or comment
+            #        why its not important to do.
+            #
             if found:
                 attrs = conn.entries[0].entry_attributes_as_dict
         return attrs
@@ -632,14 +638,14 @@ class LDAPAuthenticator(Authenticator):
                 ),
                 attributes=self.attributes,
             )
-            n_users = len(conn.response)
-            if n_users == 0:
+            n_entries = len(conn.entries)
+            if n_entries == 0:
                 self.log.warning(
                     "Configured search_filter found no user associated with "
                     f"userattr='{self.user_attribute}' and username='{resolved_username}'"
                 )
                 return None
-            if n_users > 1:
+            if n_entries > 1:
                 self.log.warning(
                     "Configured search_filter found multiple users associated with "
                     f"userattr='{self.user_attribute}' and username='{resolved_username}', "
