@@ -66,7 +66,6 @@ async def test_ldap_auth_disallowed(c):
 )
 async def test_ldap_auth_bind_dn_template(c, bind_dn_template):
     c.LDAPAuthenticator.bind_dn_template = bind_dn_template
-    c.LDAPAuthenticator.lookup_dn = False
     authenticator = LDAPAuthenticator(config=c)
 
     # proper username and password in allowed group
