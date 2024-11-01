@@ -553,18 +553,13 @@ class LDAPAuthenticator(Authenticator):
 
             # identify unique search response entry
             n_entries = len(conn.entries)
-            if n_entries == 0:
-                self.log.warning(
-                    "Failed to get a search response entry when looking up auth_state_attributes "
-                    f"'{', '.join(self.auth_state_attributes)}' for DN '{userdn}'"
-                )
-            elif n_entries > 1:
-                self.log.warning(
-                    "Failed to get a unique search response entry when looking up auth_state_attributes "
-                    f"'{', '.join(self.auth_state_attributes)}' for DN '{userdn}'"
-                )
-            else:
+            if n_entries == 1:
                 attrs = conn.entries[0].entry_attributes_as_dict
+            else:
+                self.log.warning(
+                    f"Expected 1 but got {n_entries} search response entries for DN '{userdn}' "
+                    "when looking up attributes configured via auth_state_attributes."
+                )
         return attrs
 
     async def authenticate(self, handler, data):
@@ -649,17 +644,10 @@ class LDAPAuthenticator(Authenticator):
                 attributes=self.attributes,
             )
             n_entries = len(conn.entries)
-            if n_entries == 0:
+            if n_entries != 1:
                 self.log.warning(
-                    "Configured search_filter found no user associated with "
-                    f"userattr='{self.user_attribute}' and username='{resolved_username}'"
-                )
-                return None
-            if n_entries > 1:
-                self.log.warning(
-                    "Configured search_filter found multiple users associated with "
-                    f"userattr='{self.user_attribute}' and username='{resolved_username}', "
-                    "a unique match is required."
+                    "Exactly 1 search response entry is required with search_filter configured, "
+                    f"but got {n_entries} for username '{login_username}'."
                 )
                 return None
 
