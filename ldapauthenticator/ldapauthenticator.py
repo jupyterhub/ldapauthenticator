@@ -464,7 +464,7 @@ class LDAPAuthenticator(Authenticator):
             )
             return (None, None)
         if n_entries > 1:
-            self.log.warning(
+            self.log.error(
                 f"Failed to lookup a unique DN for username '{username_supplied_by_user}'"
             )
             return (None, None)
