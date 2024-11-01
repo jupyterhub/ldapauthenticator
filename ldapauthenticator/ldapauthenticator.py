@@ -460,12 +460,14 @@ class LDAPAuthenticator(Authenticator):
         n_entries = len(conn.entries)
         if n_entries == 0:
             self.log.warning(
-                f"Failed to lookup a DN for username '{username_supplied_by_user}'"
+                f"Login of '{username_supplied_by_user}' denied, failed to lookup a DN"
             )
             return (None, None)
         if n_entries > 1:
             self.log.error(
-                f"Failed to lookup a unique DN for username '{username_supplied_by_user}'"
+                f"Login of '{username_supplied_by_user}' denied, expected 0 or 1 "
+                f"search response entries but received {n_entries}. Is lookup_dn_search_filter "
+                "and user_attribute configured to uniquely match against a DN?"
             )
             return (None, None)
         entry = conn.entries[0]
@@ -554,11 +556,11 @@ class LDAPAuthenticator(Authenticator):
             n_entries = len(conn.entries)
             if n_entries == 1:
                 return conn.entries[0].entry_attributes_as_dict
-            else:
-                self.log.warning(
-                    f"Expected 1 but got {n_entries} search response entries for DN '{userdn}' "
-                    "when looking up attributes configured via auth_state_attributes."
-                )
+            self.log.error(
+                f"Expected 1 but got {n_entries} search response entries for DN '{userdn}' "
+                "when looking up attributes configured via auth_state_attributes. The user's "
+                "auth state will not include any attributes."
+            )
         return {}
 
     async def authenticate(self, handler, data):
@@ -645,8 +647,10 @@ class LDAPAuthenticator(Authenticator):
             n_entries = len(conn.entries)
             if n_entries != 1:
                 self.log.warning(
-                    "Exactly 1 search response entry is required with search_filter configured, "
-                    f"but got {n_entries} for username '{login_username}'."
+                    f"Login of '{login_username}' denied. Configured search_filter "
+                    f"found {n_entries} users associated with "
+                    f"userattr='{self.user_attribute}' and username='{resolved_username}', "
+                    "and a unique match is required."
                 )
                 return None
 
