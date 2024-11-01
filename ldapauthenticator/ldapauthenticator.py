@@ -544,16 +544,26 @@ class LDAPAuthenticator(Authenticator):
     def get_user_attributes(self, conn, userdn):
         attrs = {}
         if self.auth_state_attributes:
-            found = conn.search(
+            conn.search(
                 search_base=userdn,
                 search_scope=ldap3.SUBTREE,
                 search_filter="(objectClass=*)",
                 attributes=self.auth_state_attributes,
             )
-            # FIXME: Handle situations with multiple entries below or comment
-            #        why its not important to do.
-            #
-            if found:
+
+            # identify unique search response entry
+            n_entries = len(conn.entries)
+            if n_entries == 0:
+                self.log.warning(
+                    "Failed to get a search response entry when looking up auth_state_attributes "
+                    f"'{', '.join(self.auth_state_attributes)}' for DN '{userdn}'"
+                )
+            elif n_entries > 1:
+                self.log.warning(
+                    "Failed to get a unique search response entry when looking up auth_state_attributes "
+                    f"'{', '.join(self.auth_state_attributes)}' for DN '{userdn}'"
+                )
+            else:
                 attrs = conn.entries[0].entry_attributes_as_dict
         return attrs
 
