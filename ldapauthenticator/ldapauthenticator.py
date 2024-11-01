@@ -542,7 +542,6 @@ class LDAPAuthenticator(Authenticator):
             return conn
 
     def get_user_attributes(self, conn, userdn):
-        attrs = {}
         if self.auth_state_attributes:
             conn.search(
                 search_base=userdn,
@@ -554,13 +553,13 @@ class LDAPAuthenticator(Authenticator):
             # identify unique search response entry
             n_entries = len(conn.entries)
             if n_entries == 1:
-                attrs = conn.entries[0].entry_attributes_as_dict
+                return conn.entries[0].entry_attributes_as_dict
             else:
                 self.log.warning(
                     f"Expected 1 but got {n_entries} search response entries for DN '{userdn}' "
                     "when looking up attributes configured via auth_state_attributes."
                 )
-        return attrs
+        return {}
 
     async def authenticate(self, handler, data):
         """
