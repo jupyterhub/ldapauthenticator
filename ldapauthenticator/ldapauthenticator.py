@@ -477,16 +477,17 @@ class LDAPAuthenticator(Authenticator):
             self.lookup_dn_user_dn_attribute
         )
         if not attribute_values:
-            self.log.warning(
-                f"Failed to lookup attribute '{self.lookup_dn_user_dn_attribute}' "
-                f"for username '{username_supplied_by_user}'"
+            self.log.error(
+                f"Login of '{username_supplied_by_user}' denied, failed to lookup attribute "
+                f"'{self.lookup_dn_user_dn_attribute}'. Is lookup_dn_user_dn_attribute "
+                "configured correctly?"
             )
             return (None, None)
         if len(attribute_values) > 1:
             self.log.error(
-                f"A lookup of the username '{username_supplied_by_user}' returned multiple "
-                f"values for the attribute '{self.lookup_dn_user_dn_attribute}': "
-                f"({', '.join(attribute_values)})"
+                f"Login of '{username_supplied_by_user}' denied, lookup of attribute "
+                f"'{self.lookup_dn_user_dn_attribute}' gave multiple values but only "
+                "one is expected. Is lookup_dn_user_dn_attribute configured correctly?"
             )
             return None, None
 
