@@ -459,15 +459,14 @@ class LDAPAuthenticator(Authenticator):
         # identify unique search response entry
         n_entries = len(conn.entries)
         if n_entries == 0:
-            self.log.warning(
-                f"Login of '{username_supplied_by_user}' denied, failed to lookup a DN"
-            )
+            self.log.warning(f"No response looking up '{username_supplied_by_user}'")
             return (None, None)
         if n_entries > 1:
             self.log.error(
-                f"Login of '{username_supplied_by_user}' denied, expected 0 or 1 "
-                f"search response entries but received {n_entries}. Is lookup_dn_search_filter "
-                "and user_attribute configured to uniquely match against a DN?"
+                f"Looking up '{username_supplied_by_user}' gave multiple entries, "
+                f"expected 0 or 1 search response entries but received {n_entries}. "
+                "Is lookup_dn_search_filter and user_attribute configured to get a "
+                "unique match?"
             )
             return (None, None)
         entry = conn.entries[0]
@@ -477,17 +476,23 @@ class LDAPAuthenticator(Authenticator):
             self.lookup_dn_user_dn_attribute
         )
         if not attribute_values:
-            self.log.error(
-                f"Login of '{username_supplied_by_user}' denied, failed to lookup attribute "
-                f"'{self.lookup_dn_user_dn_attribute}'. Is lookup_dn_user_dn_attribute "
-                "configured correctly?"
-            )
+            if attribute_values is None:
+                self.log.error(
+                    f"No attribute '{self.lookup_dn_user_dn_attribute}' found. "
+                    "Is lookup_dn_user_dn_attribute configured correctly?"
+                )
+            else:
+                self.log.error(
+                    f"No attribute values for '{self.lookup_dn_user_dn_attribute}'. "
+                    "Is lookup_dn_user_dn_attribute configured correctly?"
+                )
             return (None, None)
         if len(attribute_values) > 1:
             self.log.error(
-                f"Login of '{username_supplied_by_user}' denied, lookup of attribute "
-                f"'{self.lookup_dn_user_dn_attribute}' gave multiple values but only "
-                "one is expected. Is lookup_dn_user_dn_attribute configured correctly?"
+                f"Attribute '{self.lookup_dn_user_dn_attribute}' had multiple values, "
+                f"expected one attribute value but it had {len(attribute_values)} "
+                f"({';'.join(attribute_values)}). "
+                "Is lookup_dn_user_dn_attribute configured correctly?"
             )
             return None, None
 
@@ -597,6 +602,9 @@ class LDAPAuthenticator(Authenticator):
         if self.lookup_dn:
             resolved_username, resolved_dn = self.resolve_username(login_username)
             if not resolved_dn:
+                self.log.warning(
+                    "username:%s Login denied for failed lookup", login_username
+                )
                 return None
             if not bind_dn_template:
                 bind_dn_template = [resolved_dn]
