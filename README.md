@@ -210,6 +210,27 @@ c.LDAPAuthenticator.tls_kwargs = {
 }
 ```
 
+If you have received a TLS handshake error, it could be that no cipher accepted
+by LDAPAuthenticator is also accepted by the LDAP server. The default ciphers
+accepted by LDAPAuthenticator is dependent on the Python version, where
+upgrading to Python 3.10 is known to reduce the set of accepted ciphers. The
+default list of ciphers stem from
+[ssl.create_default_context().get_ciphers()](https://docs.python.org/3/library/ssl.html#ssl.create_default_context).
+
+To configure LDAPAuthenticator's accepted ciphers explicitly, you can do:
+
+```python
+# default ciphers accepted with LDAPAuthenticator in Python < 3.10
+pre_python310_ciphers = "AES128-SHA:AES256-SHA:DHE-RSA-AES128-SHA:DHE-RSA-AES256-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-ECDSA-AES256-SHA:ECDHE-RSA-AES128-SHA:ECDHE-RSA-AES256-SHA:AES128-GCM-SHA256:AES128-SHA256:AES256-GCM-SHA384:AES256-SHA256:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES128-SHA256:DHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-SHA256:DHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-CHACHA20-POLY1305:TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256"
+
+# default ciphers accepted with LDAPAuthenticator in Python >= 3.10
+post_python310_ciphers = "DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES128-SHA256:DHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-CHACHA20-POLY1305:TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256"
+
+c.LDAPAuthenticator.tls_kwargs = {
+    "ciphers": pre_python310_ciphers,
+}
+```
+
 #### `LDAPAuthenticator.server_port`
 
 Port on which to contact the LDAP server.
