@@ -2,6 +2,31 @@
 
 ## 2.0
 
+### 2.0.2 - 2024-11-06
+
+([full changelog](https://github.com/jupyterhub/ldapauthenticator/compare/2.0.1...2.0.2))
+
+#### Bugs fixed
+
+- Fix parsing of search response [#294](https://github.com/jupyterhub/ldapauthenticator/pull/294) ([@consideRatio](https://github.com/consideRatio), [@manics](https://github.com/manics))
+
+#### Maintenance and upkeep improvements
+
+- Document configuring TLS ciphers and log a link to it on raised handshake error [#297](https://github.com/jupyterhub/ldapauthenticator/pull/297) ([@consideRatio](https://github.com/consideRatio), [@manics](https://github.com/manics), )
+
+#### Continuous integration improvements
+
+- Test bind_dn_template more thoroughly [#290](https://github.com/jupyterhub/ldapauthenticator/pull/290) ([@manics](https://github.com/manics), [@consideRatio](https://github.com/consideRatio))
+
+#### Contributors to this release
+
+The following people contributed discussions, new ideas, code and documentation contributions, and review.
+See [our definition of contributors](https://github-activity.readthedocs.io/en/latest/#how-does-this-tool-define-contributions-in-the-reports).
+
+([GitHub contributors page for this release](https://github.com/jupyterhub/ldapauthenticator/graphs/contributors?from=2024-10-29&to=2024-11-06&type=c))
+
+@consideRatio ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3AconsideRatio+updated%3A2024-10-29..2024-11-06&type=Issues)) | @franciscaestecker ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Afranciscaestecker+updated%3A2024-10-29..2024-11-06&type=Issues)) | @franciscaestecker-bb ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Afranciscaestecker-bb+updated%3A2024-10-29..2024-11-06&type=Issues)) | @manics ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Fldapauthenticator+involves%3Amanics+updated%3A2024-10-29..2024-11-06&type=Issues))
+
 ### 2.0.1 - 2024-10-29
 
 ([full changelog](https://github.com/jupyterhub/ldapauthenticator/compare/2.0.0...2.0.1))
