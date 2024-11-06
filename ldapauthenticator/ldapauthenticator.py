@@ -4,7 +4,7 @@ from inspect import isawaitable
 
 import ldap3
 from jupyterhub.auth import Authenticator
-from ldap3.core.exceptions import LDAPBindError
+from ldap3.core.exceptions import LDAPBindError, LDAPSocketOpenError
 from ldap3.core.tls import Tls
 from ldap3.utils.conv import escape_filter_chars
 from ldap3.utils.dn import escape_rdn
@@ -536,6 +536,16 @@ class LDAPAuthenticator(Authenticator):
                 password=password,
                 auto_bind=auto_bind,
             )
+        except LDAPSocketOpenError as e:
+            if "handshake" in str(e).lower():
+                self.log.error(
+                    "A TLS handshake failure has occurred. "
+                    "It could be an indication that no cipher suite accepted by "
+                    "LDAPAuthenticator was accepted by the LDAP server. For "
+                    "guidance on how to handle this, refer to documentation at "
+                    "https://github.com/consideRatio/ldapauthenticator/tree/main?tab=readme-ov-file#handling-ssltls-handshake-errors"
+                )
+            raise
         except LDAPBindError as e:
             self.log.debug(
                 "Failed to bind {userdn}\n{e_type}: {e_msg}".format(

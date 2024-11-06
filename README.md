@@ -370,6 +370,53 @@ JupyterHub create local accounts using the LDAPAuthenticator.
 Issue [#19](https://github.com/jupyterhub/ldapauthenticator/issues/19) provides
 additional discussion on local user creation.
 
+## Handling SSL/TLS handshake errors
+
+If you have received a SSL/TLS handshake error, it could be that no [cipher
+suite] accepted by LDAPAuthenticator is also accepted by the LDAP server. This
+is likely because LDAPAuthenticator is stricter than the LDAP server and only
+accepts modern cipher suites than the LDAP server doesn't accept. Due to this,
+you should from a security perspective ideally modernize the LDAP server's
+accepted cipher suites rather than expand the LDAPAuthenticator accepted cipher
+suites to include older cipher suites.
+
+The cipher suites that LDAPAuthenticator accepted by default come from
+[ssl.create_default_context().get_ciphers()], which in turn can change with
+Python version. Upgrading Python from 3.7 - 3.9 to 3.10 - 3.13 is known to
+strictly reduce the set of accepted cipher suites from 30 to 17 for example. Due
+to this, upgrading Python could lead to observing a handshake error previously
+not observed.
+
+If you want to configure LDAPAuthenticator to accept older cipher suites instead
+of updating the LDAP server to accept modern cipher suites, you can do it using
+`LDAPAuthenticator.tls_kwargs` as demonstrated below.
+
+```python
+# default cipher suites accepted by LDAPAuthenticator in Python 3.7 - 3.9
+# it includes 30 cipher suites, where 13 of them were considered less secure
+# and removed as default cipher suites in Python 3.10
+old_ciphers_list_considered_less_secure = "AES128-SHA:AES256-SHA:DHE-RSA-AES128-SHA:DHE-RSA-AES256-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-ECDSA-AES256-SHA:ECDHE-RSA-AES128-SHA:ECDHE-RSA-AES256-SHA:AES128-GCM-SHA256:AES128-SHA256:AES256-GCM-SHA384:AES256-SHA256:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES128-SHA256:DHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-SHA256:DHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-CHACHA20-POLY1305:TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256"
+
+# default cipher suites accepted by LDAPAuthenticator in Python 3.10 - 3.13
+# this list includes 17 cipher suites out of the 30 in the old list, with no
+# new additions
+new_ciphers_list = "DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES128-SHA256:DHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-CHACHA20-POLY1305:TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256"
+
+c.LDAPAuthenticator.tls_kwargs = {
+    "ciphers": old_ciphers_list_considered_less_secure,
+}
+```
+
+For reference, you can use a command like below to see what the default cipher
+suites LDAPAuthenticator will use in various Python versions.
+
+```shell
+docker run -it --rm python:3.13 python -c 'import ssl; c = ssl.create_default_context(); print(":".join(sorted([c["name"] for c in c.get_ciphers()])))'
+```
+
+[cipher suite]: https://en.wikipedia.org/wiki/Cipher_suite#Full_handshake:_coordinating_cipher_suites
+[ssl.create_default_context().get_ciphers()]: https://docs.python.org/3/library/ssl.html#ssl.create_default_context
+
 ## Testing LDAPAuthenticator without JupyterHub
 
 This script can be written to a file such as `test_ldap_auth.py`, and run with
