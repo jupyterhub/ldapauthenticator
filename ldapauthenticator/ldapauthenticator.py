@@ -540,11 +540,10 @@ class LDAPAuthenticator(Authenticator):
             if "handshake" in str(e).lower():
                 self.log.error(
                     "A TLS handshake failure has occurred. "
-                    "It could be an indication that no cipher accepted by "
+                    "It could be an indication that no cipher suite accepted by "
                     "LDAPAuthenticator was accepted by the LDAP server. For "
-                    "details on how to handle this, refer to documentation of "
-                    "the tls_kwargs config on how to configure ciphers "
-                    "https://github.com/jupyterhub/ldapauthenticator/#ldapauthenticatortls_kwargs."
+                    "guidance on how to handle this, refer to documentation at "
+                    "https://github.com/consideRatio/ldapauthenticator/tree/main?tab=readme-ov-file#handling-ssltls-handshake-errors"
                 )
             raise
         except LDAPBindError as e:
