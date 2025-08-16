@@ -60,7 +60,6 @@ See [our definition of contributors](https://github-activity.readthedocs.io/en/l
 - `lookup_dn` now rejects an authenticating user if multiple DNs are returned
   during lookup. ([#276](https://github.com/jupyterhub/ldapauthenticator/pull/276))
 - In the edge case if both...
-
   1. the following config is used:
      - `lookup_dn = True`,
      - `lookup_dn_user_dn_attribute = "cn"`
