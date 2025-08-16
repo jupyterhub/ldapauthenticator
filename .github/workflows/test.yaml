@@ -61,4 +61,4 @@ jobs:
           pytest --cov=ldapauthenticator
 
       # GitHub action reference: https://github.com/codecov/codecov-action
-      - uses: codecov/codecov-action@v4
+      - uses: codecov/codecov-action@v5
