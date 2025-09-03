@@ -385,6 +385,18 @@ class LDAPAuthenticator(Authenticator):
         """,
     )
 
+    attributes_search_filter = Unicode(
+        config=True,
+        default_value="(objectClass=*)",
+        allow_none=True,
+        help="""
+        Filter for querying user attributes lookup.
+
+        Default value `'(objectClass=*)'` should be good enough for most
+        use cases.
+        """,
+    )
+
     auth_state_attributes = List(
         config=True,
         help="""
@@ -564,7 +576,7 @@ class LDAPAuthenticator(Authenticator):
             conn.search(
                 search_base=userdn,
                 search_scope=ldap3.SUBTREE,
-                search_filter="(objectClass=*)",
+                search_filter=self.attributes_search_filter,
                 attributes=self.auth_state_attributes,
             )
 
